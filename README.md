@@ -23,3 +23,46 @@
 [AGENTS.md](AGENTS.md)를 먼저 읽히고 한 번에 한 제작 단위만 요청하세요. 2단계부터는 자료 보호를 구현할 때 `public/data.json`을 복사하는 1단계 빌드 흐름도 함께 바꿔야 합니다. 3단계 이후의 로그인, 허용 경로, 5단계의 원본 API 주소, 6단계 이후 정책 규칙은 해당 단계 원고와 계약에 맞춰 추가합니다. 비밀번호·토큰·서버 전용 키·실제 학생 기록을 코드, Git, 제출 묶음에 넣지 않습니다.
 
 `src/decider.mjs`와 `src/detect.mjs`의 로컬 시험은 반 엔진이나 운영 심판의 결과가 아닙니다. 1단계 이후 제출 묶음 계약 `aleph.defense.submission.v2`는 `scripts/bundle.mjs`에 남아 있으며, 코딩 도구가 해당 단계의 최신 배포 주소와 Git 원격을 맞춘 뒤 사용합니다.
+
+## 2단계 저장점 — 자료를 코드 밖으로 옮깁니다
+
+### 현재 구현
+- `supabase/notes.sql`은 학습용 `public.notes` 테이블, `owner_id uuid`, RLS 및 가상 메모 네 건을 정의합니다.
+- `api/notes.js`는 GET 요청만 허용하고 `SUPABASE_URL`, `SUPABASE_SECRET_KEY` 환경변수로 Supabase를 조회합니다.
+- `public/index.html`은 `/api/notes`를 호출해 메모를 표시합니다.
+- 2단계 빌드는 `public/data.json`을 제거하고 `public/aleph.json` 생성을 유지합니다.
+- 루트의 `data.json`은 로컬에 남아 있습니다. 공개 결과물이나 제출 묶음에 포함되지 않는지 별도로 확인해야 합니다.
+
+### 보안상 남은 약점
+`/api/notes`는 아직 인증·접근 제한이 없는 공개 주소입니다. 누구나 호출할 수 있으므로 가상 메모만 유지합니다. 서버 전용 키는 브라우저 코드, 응답, 로그, Git 및 제출 묶음에 넣지 않습니다.
+
+### 다시 실행하고 시험하기
+- 의존성 설치: `npm install`
+- 로컬 빌드: `npm run build -- --local`
+- 패키지 테스트: `npm run test:package`
+- R5 테스트: `npm run test:r5`
+- Notes API 테스트: `node --test test/notes-api.test.mjs`
+
+이 테스트는 실제 배포나 Supabase 연결 성공을 증명하지 않습니다.
+
+### 공개 자료 확인 절차
+1. 로컬 빌드 후 `public/data.json`이 없는지 확인합니다.
+2. 배포 사이트의 `/data.json`이 메모를 반환하지 않는지 확인합니다.
+3. GitHub 최신 파일과 배포 파일에서 아래 문장 및 `SAMPLE_NOTE_1`을 검색하고 결과를 기록합니다.
+
+   - `실습용 가상 과제 기록`
+   - `실습용 가상 포트폴리오 기록`
+   - `실습용 가상 리추얼 기록`
+   - `실습용 가상 행정 기록`
+
+4. `/api/notes`가 공개 API라는 약점도 기록합니다.
+
+과거 공개 커밋과 이전 배포에는 가상 메모가 남아 있을 수 있습니다. 검색 결과가 없거나 새 배포가 성공해도 과거 노출이 해소됐다고 단정하지 않습니다.
+
+### 미확인 항목
+- 변경 사항이 GitHub 최신 커밋에 반영되었는지
+- 새 Vercel 배포가 완료되었는지
+- 배포 API가 Supabase에서 네 건을 반환하는지
+- 배포된 `/data.json`과 최신 GitHub 파일에서 메모 문장이 사라졌는지
+
+위 항목은 실제 확인 후에만 완료로 기록합니다.
