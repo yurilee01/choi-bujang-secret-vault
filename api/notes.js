@@ -25,11 +25,13 @@ export default async function handler(request, response) {
       .select('id,title,content,created_at');
 
     if (error) {
+      console.error('Supabase query failed:', { code: error.code, status: error.status });
       return response.status(502).json({ error: 'UPSTREAM_SERVICE_ERROR' });
     }
 
     return response.status(200).json(data);
-  } catch (_error) {
+  } catch (error) {
+    console.error('Supabase request failed:', { name: error?.name, code: error?.code, status: error?.status });
     return response.status(502).json({ error: 'UPSTREAM_SERVICE_ERROR' });
   }
 }
