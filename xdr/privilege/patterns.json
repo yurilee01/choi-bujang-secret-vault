@@ -1,0 +1,23 @@
+{
+  "mitre": [
+    "T1078",
+    "T1068"
+  ],
+  "patterns": [
+    {
+      "name": "admin_group_escalation",
+      "condition": "일반 계정이 원격 주소에서 관리자 그룹에 추가되고 권한 변경 근거가 확인되는 경우",
+      "evidence": "pv-01, pv-04 경보에서 일반 계정의 관리자 그룹 추가가 확인됨"
+    },
+    {
+      "name": "rapid_privilege_command",
+      "condition": "관리자 그룹 추가 또는 권한 변경 직후 관리자 명령 실행이 이어지는 경우",
+      "evidence": "pv-02, pv-04, pv-07 경보에서 권한 변경과 관리자 명령 실행이 함께 확인됨"
+    },
+    {
+      "name": "multi_account_escalation",
+      "condition": "같은 주소에서 여러 계정이 관리자 그룹에 추가되거나 반복 권한 변경이 확인되는 경우",
+      "evidence": "pv-05 경보에서 같은 주소로 계정 4개의 관리자 그룹 추가가 확인됨"
+    }
+  ]
+}

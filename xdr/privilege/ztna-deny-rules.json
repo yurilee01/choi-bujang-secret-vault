@@ -1,0 +1,47 @@
+[
+  {
+    "ruleId": "xdr.privilege.pv-01",
+    "action": "deny",
+    "sourceIp": "203.0.113.11",
+    "evidenceAlertId": "pv-01",
+    "reason": "admin_group_escalation",
+    "createdAt": "2026-11-05T05:01:13.022Z",
+    "expiresAt": "2026-11-05T05:16:13.022Z"
+  },
+  {
+    "ruleId": "xdr.privilege.pv-02",
+    "action": "deny",
+    "sourceIp": "203.0.113.11",
+    "evidenceAlertId": "pv-02",
+    "reason": "rapid_privilege_command",
+    "createdAt": "2026-11-05T05:01:13.023Z",
+    "expiresAt": "2026-11-05T05:16:13.023Z"
+  },
+  {
+    "ruleId": "xdr.privilege.pv-04",
+    "action": "deny",
+    "sourceIp": "192.0.2.11",
+    "evidenceAlertId": "pv-04",
+    "reason": "rapid_privilege_command",
+    "createdAt": "2026-11-05T05:01:13.023Z",
+    "expiresAt": "2026-11-05T05:16:13.023Z"
+  },
+  {
+    "ruleId": "xdr.privilege.pv-05",
+    "action": "deny",
+    "sourceIp": "203.0.113.17",
+    "evidenceAlertId": "pv-05",
+    "reason": "multi_account_escalation",
+    "createdAt": "2026-11-05T05:01:13.023Z",
+    "expiresAt": "2026-11-05T05:16:13.023Z"
+  },
+  {
+    "ruleId": "xdr.privilege.pv-07",
+    "action": "deny",
+    "sourceIp": "192.0.2.17",
+    "evidenceAlertId": "pv-07",
+    "reason": "rapid_privilege_command",
+    "createdAt": "2026-11-05T05:01:13.023Z",
+    "expiresAt": "2026-11-05T05:16:13.023Z"
+  }
+]

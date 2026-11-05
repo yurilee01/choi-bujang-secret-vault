@@ -1,0 +1,167 @@
+{
+  "schema": "aleph.xdr.result.v1",
+  "moduleKey": "privilege",
+  "decisions": [
+    {
+      "alertId": "pv-01",
+      "action": "block",
+      "confidence": 0.9,
+      "reason": "admin_group_escalation"
+    },
+    {
+      "alertId": "pv-02",
+      "action": "block",
+      "confidence": 0.98,
+      "reason": "rapid_privilege_command"
+    },
+    {
+      "alertId": "pv-03",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-04",
+      "action": "block",
+      "confidence": 0.98,
+      "reason": "rapid_privilege_command"
+    },
+    {
+      "alertId": "pv-05",
+      "action": "block",
+      "confidence": 0.97,
+      "reason": "multi_account_escalation"
+    },
+    {
+      "alertId": "pv-06",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-07",
+      "action": "block",
+      "confidence": 0.98,
+      "reason": "rapid_privilege_command"
+    },
+    {
+      "alertId": "pv-08",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-09",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-10",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-11",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-12",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-13",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-14",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-15",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-16",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "ambiguous_privilege_indicator"
+    },
+    {
+      "alertId": "pv-17",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-18",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-19",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-20",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-21",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-22",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-23",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-24",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-25",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    },
+    {
+      "alertId": "pv-26",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_privilege_pattern"
+    }
+  ],
+  "counts": {
+    "block": 5,
+    "alert": 8,
+    "record": 13
+  }
+}
