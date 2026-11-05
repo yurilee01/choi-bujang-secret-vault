@@ -1,0 +1,20 @@
+{
+  "mitre": "T1190",
+  "patterns": [
+    {
+      "name": "repeated_sql_injection",
+      "condition": "요청 설명에 SQL 구문 또는 데이터베이스 조회 구문을 이어 붙이는 공격 표기가 있고 반복 횟수가 8회 이상",
+      "evidence": "SQL 구문 및 데이터베이스 조회 표기가 반복된 경보에서 확인됨"
+    },
+    {
+      "name": "repeated_script_injection",
+      "condition": "요청 설명에 스크립트 삽입 표기가 있고 반복 횟수가 8회 이상",
+      "evidence": "스크립트 삽입 표기가 반복된 경보에서 확인됨"
+    },
+    {
+      "name": "repeated_path_traversal",
+      "condition": "요청 설명에 여러 단계의 경로 이탈 또는 경로 탐색 표기가 있고 반복 횟수가 8회 이상",
+      "evidence": "경로를 여러 단계 거슬러 올라가는 표기가 반복된 경보에서 확인됨"
+    }
+  ]
+}

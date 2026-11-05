@@ -49,3 +49,23 @@ node scripts/xdr-run.mjs brute-force
 - `xdr/alerts.log` 기록과 판정기 연결은 `respond.mjs` 같은 다른 파일에서 합니다. `decide.mjs` 는 판단 결과만 돌려줍니다.
 
 인터넷을 끈 상태에서 `npm run xdr:run -- <moduleKey>` 를 돌려도 같은 결과가 나오면 심판에서도 같은 결과가 나옵니다.
+
+## web-injection 대응 결과
+
+`web-injection`은 MITRE ATT&CK T1190을 참고해 SQL 삽입, 스크립트 삽입, 경로 탐색의 반복 패턴을 탐지합니다.
+
+- `read-alerts.mjs`: 원본 경보에서 필요한 항목만 추출합니다.
+- `patterns.json`: 탐지 조건과 근거를 기록합니다.
+- `decide.mjs`: 파일·네트워크 접근 없이 경보를 판정합니다.
+- `respond.mjs`: 명확한 공격 후보에 한해 15분 만료의 로컬 ZTNA deny 규칙과 `xdr/alerts.log` 기록을 생성합니다.
+
+실행 방법:
+
+```bash
+npm run xdr:run -- web-injection
+node xdr/web-injection/respond.mjs
+```
+
+검증 결과: 전체 26건 중 차단 7건, 경고 3건, 기록 16건이며 정상·애매한 이벤트의 오차단은 0건입니다. 차단 규칙에는 증거 경보 ID와 만료 시간이 포함됩니다.
+
+※ 대응 결과는 로컬 연습용 규칙 파일이며 실제 네트워크 장비에 차단 정책을 적용한 것은 아닙니다.
