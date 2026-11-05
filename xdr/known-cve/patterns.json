@@ -1,0 +1,15 @@
+{
+  "mitre": "T1190",
+  "patterns": [
+    {
+      "name": "jndi_remote_lookup",
+      "condition": "요청 머리글 또는 주소 매개변수에서 ${jndi:...} 형태의 원격 조회 구문이 확인되는 경우",
+      "evidence": "kc-01부터 kc-08까지 머리글 또는 주소 매개변수에 원격 조회 구문이 있다는 경보 설명이 확인됨"
+    },
+    {
+      "name": "known_vulnerability_scanner",
+      "condition": "요청 정보에서 알려진 취약점 점검 도구의 식별 흔적이 확인되는 경우",
+      "evidence": "kc-05 경보 설명에 알려진 취약점 점검 흔적이 함께 있다고 기록됨"
+    }
+  ]
+}

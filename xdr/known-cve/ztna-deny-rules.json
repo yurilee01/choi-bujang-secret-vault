@@ -1,0 +1,74 @@
+[
+  {
+    "ruleId": "xdr.known-cve.kc-01",
+    "action": "deny",
+    "sourceIp": "203.0.113.10",
+    "evidenceAlertId": "kc-01",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  },
+  {
+    "ruleId": "xdr.known-cve.kc-02",
+    "action": "deny",
+    "sourceIp": "203.0.113.10",
+    "evidenceAlertId": "kc-02",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  },
+  {
+    "ruleId": "xdr.known-cve.kc-03",
+    "action": "deny",
+    "sourceIp": "198.51.100.16",
+    "evidenceAlertId": "kc-03",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  },
+  {
+    "ruleId": "xdr.known-cve.kc-04",
+    "action": "deny",
+    "sourceIp": "192.0.2.16",
+    "evidenceAlertId": "kc-04",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  },
+  {
+    "ruleId": "xdr.known-cve.kc-05",
+    "action": "deny",
+    "sourceIp": "203.0.113.24",
+    "evidenceAlertId": "kc-05",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  },
+  {
+    "ruleId": "xdr.known-cve.kc-06",
+    "action": "deny",
+    "sourceIp": "198.51.100.24",
+    "evidenceAlertId": "kc-06",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  },
+  {
+    "ruleId": "xdr.known-cve.kc-07",
+    "action": "deny",
+    "sourceIp": "192.0.2.24",
+    "evidenceAlertId": "kc-07",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  },
+  {
+    "ruleId": "xdr.known-cve.kc-08",
+    "action": "deny",
+    "sourceIp": "203.0.113.31",
+    "evidenceAlertId": "kc-08",
+    "reason": "jndi_remote_lookup",
+    "createdAt": "2026-11-05T03:47:51.272Z",
+    "expiresAt": "2026-11-05T04:02:51.272Z"
+  }
+]

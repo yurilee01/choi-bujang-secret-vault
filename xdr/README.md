@@ -69,3 +69,22 @@ node xdr/web-injection/respond.mjs
 검증 결과: 전체 26건 중 차단 7건, 경고 3건, 기록 16건이며 정상·애매한 이벤트의 오차단은 0건입니다. 차단 규칙에는 증거 경보 ID와 만료 시간이 포함됩니다.
 
 ※ 대응 결과는 로컬 연습용 규칙 파일이며 실제 네트워크 장비에 차단 정책을 적용한 것은 아닙니다.
+
+
+## known-cve 대응 결과
+
+known-cve는 MITRE ATT&CK T1190과 CVE-2021-44228 요청 형태를 참고해 원격 조회 구문과 취약점 점검 흔적을 판별합니다.
+
+- read-alerts.mjs: 원본 경보 24건에서 필요한 항목만 추출합니다.
+- patterns.json: 탐지 조건과 근거를 기록합니다.
+- decide.mjs: 외부 의존성 없이 경보를 block, alert, record로 판정합니다.
+- respond.mjs: 차단 후보에 한해 15분 만료의 로컬 ZTNA deny 규칙을 만들고, 전체 경보 24건을 xdr/alerts.log에 추가합니다.
+
+실행 방법:
+
+npm run xdr:run -- known-cve
+node xdr/known-cve/respond.mjs
+
+검증 결과: 전체 24건 중 차단 8건, 경고 3건, 기록 13건이며 정상 사용자 이벤트의 오차단은 0건입니다. 차단 규칙에는 증거 경보 ID와 만료 시간이 포함됩니다.
+
+※ 대응 결과는 로컬 연습용 규칙 파일이며 실제 ZTNA 판정기나 네트워크 장비에 차단 정책을 적용한 것은 아닙니다.
