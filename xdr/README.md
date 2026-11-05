@@ -88,3 +88,22 @@ node xdr/known-cve/respond.mjs
 검증 결과: 전체 24건 중 차단 8건, 경고 3건, 기록 13건이며 정상 사용자 이벤트의 오차단은 0건입니다. 차단 규칙에는 증거 경보 ID와 만료 시간이 포함됩니다.
 
 ※ 대응 결과는 로컬 연습용 규칙 파일이며 실제 ZTNA 판정기나 네트워크 장비에 차단 정책을 적용한 것은 아닙니다.
+
+
+## persistence 대응 결과
+
+persistence는 MITRE ATT&CK T1543(Create or Modify System Process), T1053(Scheduled Task/Job)을 참고해 비정상 서비스 등록, 낯선 예약 작업, 시작 폴더 변경 및 복합 지속성 징후를 탐지합니다.
+
+- read-alerts.mjs: 원본 경보 24건에서 필요한 항목만 추출합니다.
+- patterns.json: 탐지 조건과 근거를 기록합니다.
+- decide.mjs: 외부 의존성 없이 block, alert, record로 판정합니다.
+- respond.mjs: 차단 후보에 한해 15분 만료의 로컬 ZTNA deny 규칙을 생성하고 전체 경보 로그를 중복 없이 갱신합니다.
+
+실행 방법:
+
+npm run xdr:run -- persistence
+node xdr/persistence/respond.mjs
+
+검증 결과: 전체 24건 중 차단 8건, 경고 8건, 기록 8건이며 정상 이벤트 오차단은 0건입니다. 복합 시작 프로그램·예약 작업 징후도 차단 판정에 포함했습니다.
+
+※ 대응 결과는 로컬 연습용 규칙 파일이며 실제 ZTNA 판정기나 네트워크 장비에 정책을 적용한 것은 아닙니다.
