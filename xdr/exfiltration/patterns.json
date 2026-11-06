@@ -1,0 +1,33 @@
+{
+  "mitre": [
+    "T1041",
+    "T1048"
+  ],
+  "patterns": [
+    {
+      "name": "large_unfamiliar_destination_transfer",
+      "condition": "처음 보는 외부 목적지로 짧은 시간에 대량의 자료가 전송된 경우",
+      "evidence": "ex-01, ex-08에서 처음 보는 목적지로 자료 200건 및 자료실 전체 400건의 대량 전송이 확인됨"
+    },
+    {
+      "name": "off_hours_archive_exfiltration",
+      "condition": "업무 시간 밖에 압축 파일이 처음 보는 외부 주소로 전송된 경우",
+      "evidence": "ex-02에서 수업 시간 밖 압축 파일의 외부 전송이 확인됨"
+    },
+    {
+      "name": "repeated_large_external_transfer",
+      "condition": "같은 외부 목적지로 대용량 전송이 여러 차례 반복된 경우",
+      "evidence": "ex-03, ex-06에서 같은 목적지로 대용량 전송 8회 및 15회가 확인됨"
+    },
+    {
+      "name": "unusual_port_bulk_transfer",
+      "condition": "평소 사용하지 않는 포트로 대량의 파일이 외부 전송된 경우",
+      "evidence": "ex-04에서 평소 사용하지 않던 포트로 120MB 및 60개 파일 전송이 확인됨"
+    },
+    {
+      "name": "bulk_archive_exfiltration",
+      "condition": "자료실 전체에 해당하는 대량의 자료가 짧은 시간에 외부로 복사된 경우",
+      "evidence": "ex-08에서 자료실 전체 400건, 320MB의 외부 복사가 확인됨"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "ruleId": "xdr.exfiltration.ex-01",
+    "action": "deny",
+    "sourceIp": "192.0.2.20",
+    "evidenceAlertId": "ex-01",
+    "reason": "large_unfamiliar_destination_transfer",
+    "createdAt": "2026-11-06T00:07:39.300Z",
+    "expiresAt": "2026-11-06T00:22:39.300Z"
+  },
+  {
+    "ruleId": "xdr.exfiltration.ex-02",
+    "action": "deny",
+    "sourceIp": "192.0.2.20",
+    "evidenceAlertId": "ex-02",
+    "reason": "off_hours_archive_exfiltration",
+    "createdAt": "2026-11-06T00:07:39.301Z",
+    "expiresAt": "2026-11-06T00:22:39.301Z"
+  },
+  {
+    "ruleId": "xdr.exfiltration.ex-03",
+    "action": "deny",
+    "sourceIp": "198.51.100.20",
+    "evidenceAlertId": "ex-03",
+    "reason": "repeated_large_external_transfer",
+    "createdAt": "2026-11-06T00:07:39.301Z",
+    "expiresAt": "2026-11-06T00:22:39.301Z"
+  },
+  {
+    "ruleId": "xdr.exfiltration.ex-04",
+    "action": "deny",
+    "sourceIp": "203.0.113.20",
+    "evidenceAlertId": "ex-04",
+    "reason": "unusual_port_bulk_transfer",
+    "createdAt": "2026-11-06T00:07:39.301Z",
+    "expiresAt": "2026-11-06T00:22:39.301Z"
+  },
+  {
+    "ruleId": "xdr.exfiltration.ex-06",
+    "action": "deny",
+    "sourceIp": "198.51.100.25",
+    "evidenceAlertId": "ex-06",
+    "reason": "repeated_large_external_transfer",
+    "createdAt": "2026-11-06T00:07:39.301Z",
+    "expiresAt": "2026-11-06T00:22:39.301Z"
+  },
+  {
+    "ruleId": "xdr.exfiltration.ex-08",
+    "action": "deny",
+    "sourceIp": "192.0.2.26",
+    "evidenceAlertId": "ex-08",
+    "reason": "bulk_archive_exfiltration",
+    "createdAt": "2026-11-06T00:07:39.301Z",
+    "expiresAt": "2026-11-06T00:22:39.301Z"
+  },
+  {
+    "ruleId": "xdr.exfiltration.ex-09",
+    "action": "deny",
+    "sourceIp": "198.51.100.26",
+    "evidenceAlertId": "ex-09",
+    "reason": "repeated_large_external_transfer",
+    "createdAt": "2026-11-06T00:07:39.301Z",
+    "expiresAt": "2026-11-06T00:22:39.301Z"
+  }
+]

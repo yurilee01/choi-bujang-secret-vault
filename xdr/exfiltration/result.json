@@ -1,0 +1,191 @@
+{
+  "schema": "aleph.xdr.result.v1",
+  "moduleKey": "exfiltration",
+  "decisions": [
+    {
+      "alertId": "ex-01",
+      "action": "block",
+      "confidence": 0.97,
+      "reason": "large_unfamiliar_destination_transfer"
+    },
+    {
+      "alertId": "ex-02",
+      "action": "block",
+      "confidence": 0.95,
+      "reason": "off_hours_archive_exfiltration"
+    },
+    {
+      "alertId": "ex-03",
+      "action": "block",
+      "confidence": 0.94,
+      "reason": "repeated_large_external_transfer"
+    },
+    {
+      "alertId": "ex-04",
+      "action": "block",
+      "confidence": 0.93,
+      "reason": "unusual_port_bulk_transfer"
+    },
+    {
+      "alertId": "ex-05",
+      "action": "alert",
+      "confidence": 0.65,
+      "reason": "ambiguous_exfiltration_indicator"
+    },
+    {
+      "alertId": "ex-06",
+      "action": "block",
+      "confidence": 0.94,
+      "reason": "repeated_large_external_transfer"
+    },
+    {
+      "alertId": "ex-07",
+      "action": "alert",
+      "confidence": 0.65,
+      "reason": "ambiguous_exfiltration_indicator"
+    },
+    {
+      "alertId": "ex-08",
+      "action": "block",
+      "confidence": 0.98,
+      "reason": "bulk_archive_exfiltration"
+    },
+    {
+      "alertId": "ex-09",
+      "action": "block",
+      "confidence": 0.94,
+      "reason": "repeated_large_external_transfer"
+    },
+    {
+      "alertId": "ex-10",
+      "action": "alert",
+      "confidence": 0.65,
+      "reason": "ambiguous_exfiltration_indicator"
+    },
+    {
+      "alertId": "ex-11",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "weak_external_transfer_indicator"
+    },
+    {
+      "alertId": "ex-12",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "weak_external_transfer_indicator"
+    },
+    {
+      "alertId": "ex-13",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-14",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "weak_external_transfer_indicator"
+    },
+    {
+      "alertId": "ex-15",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "weak_external_transfer_indicator"
+    },
+    {
+      "alertId": "ex-16",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "weak_external_transfer_indicator"
+    },
+    {
+      "alertId": "ex-17",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "weak_external_transfer_indicator"
+    },
+    {
+      "alertId": "ex-18",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-19",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-20",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "weak_external_transfer_indicator"
+    },
+    {
+      "alertId": "ex-21",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-22",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-23",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-24",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-25",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-26",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-27",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-28",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-29",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    },
+    {
+      "alertId": "ex-30",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "no_supported_exfiltration_pattern"
+    }
+  ],
+  "counts": {
+    "block": 7,
+    "alert": 10,
+    "record": 13
+  }
+}

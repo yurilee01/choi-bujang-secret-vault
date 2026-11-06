@@ -126,3 +126,18 @@ node xdr/privilege/respond.mjs
 검증 결과: 전체 26건 중 차단 5건, 경고 8건, 기록 13건이며 pv-10 이후 이벤트의 오차단은 0건입니다. 차단 규칙에는 증거 경보 ID와 만료 시간이 포함됩니다.
 
 ※ 대응 결과는 로컬 연습용 규칙 파일이며 실제 ZTNA 판정기나 네트워크 장비에 차단 정책을 적용한 것은 아닙니다.
+
+## exfiltration 자료 유출 탐지·대응 (XDR-06)
+
+- MITRE ATT&CK: T1041, T1048
+- read-alerts.mjs: 원본 경보에서 필요한 항목만 읽는 검사 모듈
+- patterns.json: 근거 기반 자료 유출 탐지 패턴 5개
+- decide.mjs: 경보별 차단·경고·기록 판정. 파일 입출력 없이 독립 실행
+- respond.mjs: 차단 후보에 15분 만료 로컬 ZTNA 규칙 생성 및 로그 기록
+- 실행: npm run xdr:run -- exfiltration
+- 대응 실행: node xdr/exfiltration/respond.mjs
+- 최종 결과: 전체 30건, 차단 7건, 경고 10건, 기록 13건
+- 정상 활동 ex-21~ex-30의 오탐: 0건
+- 로그 검증: exfiltration 로그 30건, 차단 규칙 7개, 중복 로그 없음
+
+※ ZTNA 규칙은 로컬 모의 규칙이며 실제 네트워크 차단을 수행하지 않습니다.
