@@ -1,7 +1,7 @@
-// The student changes this check as each stage adds an attack to the same app.
-// Never return tokens, private keys, real names, or note bodies.
+import { readFileSync } from 'node:fs';
+
 export async function runAttackChecks(config) {
-  if (![1, 3].includes(config.step)) {
+  if (![1, 3, 5].includes(config.step)) {
     throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
   }
 
@@ -43,9 +43,7 @@ export async function runAttackChecks(config) {
           data?.sampleMarker === config.sampleMarker &&
           Array.isArray(data.notes) &&
           data.notes.length > 0;
-      } catch {
-        // A non-JSON response is a failed check.
-      }
+      } catch {}
     }
 
     return [{
@@ -72,18 +70,86 @@ export async function runAttackChecks(config) {
       data !== null &&
       typeof data === 'object' &&
       typeof data.error === 'string';
-  } catch {
-    // HTML or invalid JSON is not a successful denial.
-  }
+  } catch {}
 
-  const denied =
-    [401, 403].includes(response.status) && jsonError;
+  const denied = [401, 403].includes(response.status) && jsonError;
 
-  return [{
+  const attempts = [{
     attackId: 'anonymous_note_read',
     expected: '비로그인 메모 목록 요청을 401 또는 403 JSON 오류로 거절',
     observed: denied
       ? `비로그인 요청이 JSON 오류로 거절됨 (HTTP ${response.status})`
       : `비로그인 요청 거절 확인 실패 (HTTP ${response.status}, JSON 오류: ${jsonError})`,
   }];
+
+  if (config.step >= 5) {
+    if (typeof config.originalApiUrl !== 'string') {
+      throw new Error('원본 메모 API HTTPS 주소가 필요합니다.');
+    }
+
+    const originalUrl = new URL(config.originalApiUrl);
+
+    if (
+      originalUrl.protocol !== 'https:' ||
+      originalUrl.username ||
+      originalUrl.password ||
+      originalUrl.search ||
+      originalUrl.hash
+    ) {
+      throw new Error('원본 메모 API 주소를 확인해 주세요.');
+    }
+
+    const html = readFileSync(
+      new URL('../public/index.html', import.meta.url),
+      'utf8'
+    );
+
+    const keyStart = html.indexOf('SUPABASE_PUBLISHABLE_KEY');
+    const equalsIndex = html.indexOf('=', keyStart);
+    const quoteStart = html.indexOf(String.fromCharCode(39), equalsIndex);
+    const quoteEnd = html.indexOf(String.fromCharCode(39), quoteStart + 1);
+    const publishableKey = quoteStart >= 0 && quoteEnd > quoteStart
+      ? html.slice(quoteStart + 1, quoteEnd)
+      : null;
+
+
+    if (!publishableKey || !publishableKey.startsWith('sb_publishable_')) {
+      throw new Error('공개용 Supabase Publishable Key 설정을 확인해 주세요.');
+    }
+
+    const originalResponse = await fetch(originalUrl, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        apikey: publishableKey,
+      },
+      redirect: 'error',
+      signal: AbortSignal.timeout(10000),
+    });
+
+    let originalJsonError = false;
+
+    try {
+      const data = await originalResponse.json();
+      originalJsonError =
+        data !== null &&
+        typeof data === 'object' &&
+        !Array.isArray(data) &&
+        (typeof data.message === 'string' ||
+          typeof data.error === 'string');
+    } catch {}
+
+    const originalDenied =
+      [401, 403].includes(originalResponse.status) && originalJsonError;
+
+    attempts.push({
+      attackId: 'anonymous_original_api_read',
+      expected: '공개용 키를 사용한 원본 메모 API 직접 읽기를 401 또는 403 JSON 오류로 거절',
+      observed: originalDenied
+        ? `원본 API 직접 요청이 JSON 오류로 거절됨 (HTTP ${originalResponse.status})`
+        : `원본 API 직접 접근 차단 확인 실패 (HTTP ${originalResponse.status}, JSON 오류: ${originalJsonError})`,
+    });
+  }
+
+  return attempts;
 }
