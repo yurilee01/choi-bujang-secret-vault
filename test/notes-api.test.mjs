@@ -392,6 +392,23 @@ test('A가 추가한 메모에는 A의 사용자 ID가 저장된다', async () =
   assert.equal(database.notes[0].owner_id, A);
 });
 
+test('B가 추가한 메모에는 B의 사용자 ID가 저장된다', async () => {
+  const database = createMockDatabase([]);
+  const handler = makeHandler(B, database);
+
+  const response = await call(handler, {
+    method: 'POST',
+    body: {
+      title: 'B 새 메모',
+      body: 'B 새 메모 내용',
+      owner_id: A,
+    },
+  });
+
+  assert.equal(response.statusCode, 201);
+  assert.equal(database.notes[0].owner_id, B);
+});
+
 after(() => {
   if (originalUrl === undefined) delete process.env.SUPABASE_URL;
   else process.env.SUPABASE_URL = originalUrl;
