@@ -11,13 +11,9 @@ create table if not exists public.notes (
 -- Enable Row Level Security.
 alter table public.notes enable row level security;
 
--- Remove existing table permissions and grant CRUD to authenticated users.
+-- Revoke direct table access; server functions handle note CRUD.
 revoke all privileges on table public.notes
   from public, anon, authenticated;
-
-grant select, insert, update, delete
-  on table public.notes
-  to authenticated;
 
 -- Index for owner-based queries.
 create index if not exists notes_owner_id_idx
