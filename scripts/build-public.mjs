@@ -18,7 +18,7 @@ if (config.step === 1) {
 
   await copyFile(source, output);
   console.log('실습용 공개 자료를 public/data.json에 복사했습니다.');
-} else if (config.step === 2 || config.step === 3) {
+} else if (Number.isInteger(config.step) && config.step >= 2 && config.step <= 12) {
   await rm(output, { force: true });
   console.log(`${config.step}단계 공개 data.json을 제거했습니다.`);
 } else {
