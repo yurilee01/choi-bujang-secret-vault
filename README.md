@@ -7,7 +7,7 @@
 - GitHub: https://github.com/yurilee01/choi-bujang-secret-vault
 - 배포 주소: https://choi-bujang-secret-vault-umber-beta.vercel.app
 - 사용 기술: Node.js, Vercel, Supabase Auth, Supabase Database
-- 현재 작업 단계: 4단계 로그인 사용자별 메모 소유권 보호
+- 현재 작업 단계: 6단계 등록 기기만 자료실 접근 허용
 - 추가 실습: 무차별 로그인 공격 방어(XDR)
 
 ## 1단계 — 공개 메모 데이터
@@ -139,3 +139,12 @@ node --test test/notes-api.test.mjs
 - 사용자 인증 정보는 서버에서 검증합니다.
 - 사용자 ID는 검증된 인증 정보에서 가져옵니다.
 - 로컬 테스트 성공과 실제 배포 성공을 구분합니다.
+
+## 6단계 저장점 — 등록 기기만 자료실 접근
+
+- `src/decider.mjs`에 `device_registered` 규칙을 구현했습니다.
+- `request.deviceRegistered === true`인 요청만 허용합니다.
+- 미등록 기기는 `deny` 및 `device_not_registered`로 거부합니다.
+- 요청·응답 형식은 `docs/DECIDER_REQUEST.md`를 따릅니다.
+- `npm run decider:test`에서 등록 기기와 미등록 기기 가상 요청이 모두 통과했습니다.
+- 위 테스트는 로컬 연습이며 실제 심판 판정 증거는 아닙니다.
