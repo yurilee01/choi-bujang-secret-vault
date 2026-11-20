@@ -18,11 +18,11 @@ function validResponse(request, response, ruleIds) {
     && response.ruleIds.every(id => ruleIds.includes(id));
 }
 
-// Local practice only. The class engine and the server judge validate live requests separately.
+// 로컬 가상 요청으로만 확인하는 연습 테스트입니다.
 export async function checkDecider({ decide, ruleIds }) {
   if (typeof decide !== 'function' || !Array.isArray(ruleIds)
       || !ruleIds.includes('device_registered')) {
-    throw new Error('6단계 device_registered 규칙을 먼저 구현하고 RULE_IDS에 적어 주세요.');
+    throw new Error('device_registered 규칙을 먼저 구현하고 RULE_IDS에 적어 주세요.');
   }
 
   const { normal, suspicious } = fixtureRequests();
@@ -55,6 +55,26 @@ export async function checkDecider({ decide, ruleIds }) {
           ...suspicious,
           requestId: randomUUID(),
           stepUp: { verified: true, authAgeSeconds: 60 },
+        },
+        decision: 'allow',
+        reasonCode: 'approved',
+      },
+      {
+        name: '5분이 지난 재확인',
+        request: {
+          ...suspicious,
+          requestId: randomUUID(),
+          stepUp: { verified: true, authAgeSeconds: 301 },
+        },
+        decision: 'step_up',
+        reasonCode: 'step_up_required',
+      },
+      {
+        name: '확인되지 않은 재인증',
+        request: {
+          ...suspicious,
+          requestId: randomUUID(),
+          stepUp: { verified: false, authAgeSeconds: null },
         },
         decision: 'step_up',
         reasonCode: 'step_up_required',

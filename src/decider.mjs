@@ -58,6 +58,15 @@ function hasFixtureRisk(request) {
   return unusualTime && unfamiliarNetwork && recentHighVolume;
 }
 
+function hasRecentStepUp(request) {
+  const stepUp = request.stepUp;
+
+  return stepUp?.verified === true
+    && Number.isFinite(stepUp.authAgeSeconds)
+    && stepUp.authAgeSeconds >= 0
+    && stepUp.authAgeSeconds <= 300;
+}
+
 function response(request, decision, reasonCode, ruleIds) {
   return {
     schema: 'aleph.decision.v1',
@@ -69,6 +78,7 @@ function response(request, decision, reasonCode, ruleIds) {
 }
 
 export async function decide(request) {
+  // 기존 기기 등록 검사는 가장 먼저 유지합니다.
   if (request.deviceRegistered !== true) {
     return response(
       request,
@@ -87,7 +97,9 @@ export async function decide(request) {
     );
   }
 
-  if (hasFixtureRisk(request)) {
+  // 복합 이상 접속은 추가 확인이 없거나 5분이 지났으면 재확인합니다.
+  // 엔진이 확인한 재인증이 5분 이내라면 다음 규칙으로 진행합니다.
+  if (hasFixtureRisk(request) && !hasRecentStepUp(request)) {
     return response(
       request,
       'step_up',
