@@ -101,6 +101,20 @@
       color: #8ad8df;
     }
 
+    #mfaQr {
+      display: block;
+      width: 220px;
+      max-width: 100%;
+      margin: 18px auto;
+      padding: 12px;
+      border-radius: 12px;
+      background: white;
+    }
+
+    #mfaSecret {
+      font-family: monospace;
+    }
+
     .hidden { display: none; }
   </style>
 </head>
@@ -126,6 +140,41 @@
       </form>
 
       <p id="authMessage" class="message" aria-live="polite"></p>
+    </section>
+
+    <section id="mfaSection" class="hidden">
+      <h2>2단계 인증</h2>
+      <p id="mfaMessage" class="message" aria-live="polite">
+        인증 수단을 확인하고 있습니다.
+      </p>
+
+      <div id="mfaEnrollment" class="hidden">
+        <h3>인증 앱 등록</h3>
+        <p>Google Authenticator 등의 인증 앱으로 QR 코드를 스캔해 주세요.</p>
+        <img id="mfaQr" class="hidden" alt="2단계 인증 등록 QR 코드">
+
+        <label for="mfaSecret">수동 등록 키</label>
+        <input id="mfaSecret" type="password" readonly
+          autocomplete="off">
+
+        <button type="button" id="showSecretButton" class="secondary">
+          등록 키 보기
+        </button>
+      </div>
+
+      <form id="mfaForm" class="hidden">
+        <label for="mfaCode">인증 앱의 6자리 코드</label>
+        <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code"
+          pattern="[0-9]{6}" maxlength="6" required>
+        <button type="submit">인증 확인</button>
+      </form>
+
+      <button type="button" id="enrollButton" class="hidden">
+        인증 앱 등록하기
+      </button>
+      <button type="button" id="mfaLogoutButton" class="secondary">
+        로그아웃
+      </button>
     </section>
 
     <section id="notesSection" class="hidden">
@@ -175,9 +224,20 @@
     const noteMessage = document.querySelector('#noteMessage');
     const notesList = document.querySelector('#notes');
     const noteForm = document.querySelector('#noteForm');
+    const mfaSection = document.querySelector('#mfaSection');
+    const mfaMessage = document.querySelector('#mfaMessage');
+    const mfaEnrollment = document.querySelector('#mfaEnrollment');
+    const mfaQr = document.querySelector('#mfaQr');
+    const mfaSecret = document.querySelector('#mfaSecret');
+    const mfaForm = document.querySelector('#mfaForm');
+    const mfaCode = document.querySelector('#mfaCode');
+    const enrollButton = document.querySelector('#enrollButton');
 
     let currentUser = null;
     let editingId = null;
+    let currentFactorId = null;
+    let currentChallengeId = null;
+    let screenUpdateVersion = 0;
 
     function showMessage(element, message) {
       element.textContent = message;
@@ -281,22 +341,247 @@
       }
     }
 
+    function clearMfaEnrollment() {
+      mfaQr.removeAttribute('src');
+      mfaQr.classList.add('hidden');
+      mfaSecret.value = '';
+      mfaSecret.type = 'password';
+      mfaEnrollment.classList.add('hidden');
+      mfaForm.classList.add('hidden');
+      enrollButton.classList.add('hidden');
+      mfaCode.value = '';
+      currentFactorId = null;
+      currentChallengeId = null;
+    }
+
+    async function startMfaChallenge(factorId) {
+      if (currentFactorId === factorId && currentChallengeId) return;
+
+      currentFactorId = factorId;
+      currentChallengeId = null;
+      showMessage(mfaMessage, '인증 코드를 준비하고 있습니다.');
+
+      const { data, error } = await supabase.auth.mfa.challenge({
+        factorId,
+      });
+
+      if (error) {
+        showMessage(mfaMessage, `인증 준비 실패: ${error.message}`);
+        return;
+      }
+
+      currentChallengeId = data.id;
+      mfaForm.classList.remove('hidden');
+      showMessage(mfaMessage, '인증 앱에 표시된 6자리 코드를 입력해 주세요.');
+    }
+
     async function updateScreen(session) {
+      const version = ++screenUpdateVersion;
       currentUser = session?.user ?? null;
 
       authSection.classList.toggle('hidden', Boolean(currentUser));
-      notesSection.classList.toggle('hidden', !currentUser);
+      notesSection.classList.add('hidden');
+      mfaSection.classList.add('hidden');
 
-      if (currentUser) {
-        document.querySelector('#userInfo').textContent =
-          `로그인 계정: ${currentUser.email ?? '사용자'}`;
-        showMessage(authMessage, '');
-        await loadNotes();
-      } else {
+      if (!currentUser) {
+        clearMfaEnrollment();
         notesList.replaceChildren();
         resetForm();
+        return;
+      }
+
+      document.querySelector('#userInfo').textContent =
+        `로그인 계정: ${currentUser.email ?? '사용자'}`;
+      showMessage(authMessage, '');
+      mfaSection.classList.remove('hidden');
+      showMessage(mfaMessage, '인증 단계를 확인하고 있습니다.');
+
+      const { data: assurance, error: assuranceError } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+
+      if (version !== screenUpdateVersion) return;
+
+      if (assuranceError) {
+        showMessage(mfaMessage, `인증 상태 확인 실패: ${assuranceError.message}`);
+        return;
+      }
+
+      if (assurance.currentLevel === 'aal2') {
+        clearMfaEnrollment();
+        mfaSection.classList.add('hidden');
+        notesSection.classList.remove('hidden');
+        await loadNotes();
+        return;
+      }
+
+      const { data: factors, error: factorsError } =
+        await supabase.auth.mfa.listFactors();
+
+      if (version !== screenUpdateVersion) return;
+
+      if (factorsError) {
+        showMessage(mfaMessage, `인증 수단 조회 실패: ${factorsError.message}`);
+        return;
+      }
+
+      const verifiedFactor = factors.totp.find(
+        (factor) => factor.status === 'verified'
+      );
+
+      if (verifiedFactor) {
+        mfaEnrollment.classList.add('hidden');
+        enrollButton.classList.add('hidden');
+        await startMfaChallenge(verifiedFactor.id);
+        return;
+      }
+
+      clearMfaEnrollment();
+      enrollButton.classList.remove('hidden');
+
+      const pendingFactor = factors.all.find(
+        (factor) =>
+          factor.factor_type === 'totp' &&
+          factor.status === 'unverified'
+      );
+
+      if (pendingFactor) {
+        showMessage(
+          mfaMessage,
+          '완료되지 않은 인증 앱 등록이 있습니다. 다시 등록해 주세요.'
+        );
+      } else {
+        showMessage(
+          mfaMessage,
+          '메모를 열기 전에 인증 앱을 등록해야 합니다.'
+        );
       }
     }
+
+    document.querySelector('#enrollButton').addEventListener(
+      'click',
+      async () => {
+        enrollButton.disabled = true;
+        showMessage(mfaMessage, '인증 앱을 등록하고 있습니다.');
+
+        try {
+          const { data: factors, error: listError } =
+            await supabase.auth.mfa.listFactors();
+
+          if (listError) throw listError;
+
+          const pendingFactors = factors.all.filter(
+            (factor) =>
+              factor.factor_type === 'totp' &&
+              factor.status === 'unverified'
+          );
+
+          for (const factor of pendingFactors) {
+            const { error } = await supabase.auth.mfa.unenroll({
+              factorId: factor.id,
+            });
+            if (error) throw error;
+          }
+
+          const { data, error } = await supabase.auth.mfa.enroll({
+            factorType: 'totp',
+            friendlyName: 'BYTE BACK 인증 앱',
+            issuer: 'BYTE BACK',
+          });
+
+          if (error) throw error;
+
+          currentFactorId = data.id;
+          currentChallengeId = null;
+
+          mfaQr.src = `data:image/svg+xml;utf-8,${encodeURIComponent(data.totp.qr_code)}`;
+          mfaQr.classList.remove('hidden');
+          mfaSecret.value = data.totp.secret;
+          mfaEnrollment.classList.remove('hidden');
+          enrollButton.classList.add('hidden');
+
+          await startMfaChallenge(data.id);
+          showMessage(
+            mfaMessage,
+            'QR 코드를 인증 앱으로 스캔한 뒤 6자리 코드를 입력해 주세요.'
+          );
+        } catch (error) {
+          showMessage(mfaMessage, `인증 앱 등록 실패: ${error.message}`);
+        } finally {
+          enrollButton.disabled = false;
+        }
+      }
+    );
+
+    document.querySelector('#showSecretButton').addEventListener(
+      'click',
+      () => {
+        const showing = mfaSecret.type === 'text';
+        mfaSecret.type = showing ? 'password' : 'text';
+        document.querySelector('#showSecretButton').textContent =
+          showing ? '등록 키 보기' : '등록 키 숨기기';
+      }
+    );
+
+    mfaForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const code = mfaCode.value.trim();
+
+      if (!/^\d{6}$/.test(code)) {
+        showMessage(mfaMessage, '6자리 숫자를 입력해 주세요.');
+        return;
+      }
+
+      if (!currentFactorId || !currentChallengeId) {
+        showMessage(mfaMessage, '인증 준비가 완료되지 않았습니다. 다시 로그인해 주세요.');
+        return;
+      }
+
+      const verifyButton = mfaForm.querySelector('button[type="submit"]');
+      verifyButton.disabled = true;
+      showMessage(mfaMessage, '인증 코드를 확인하고 있습니다.');
+
+      try {
+        const { error } = await supabase.auth.mfa.verify({
+          factorId: currentFactorId,
+          challengeId: currentChallengeId,
+          code,
+        });
+
+        if (error) throw error;
+
+        clearMfaEnrollment();
+        const { data } = await supabase.auth.getSession();
+        await updateScreen(data.session);
+      } catch (error) {
+        currentChallengeId = null;
+        showMessage(mfaMessage, `인증 실패: ${error.message}`);
+
+        try {
+          await startMfaChallenge(currentFactorId);
+        } catch {
+          showMessage(mfaMessage, '인증 코드를 다시 준비하지 못했습니다. 다시 로그인해 주세요.');
+        }
+      } finally {
+        verifyButton.disabled = false;
+        mfaCode.value = '';
+      }
+    });
+
+    document.querySelector('#mfaLogoutButton').addEventListener(
+      'click',
+      async () => {
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+          showMessage(mfaMessage, `로그아웃 실패: ${error.message}`);
+          return;
+        }
+
+        await updateScreen(null);
+        showMessage(authMessage, '로그아웃했습니다.');
+      }
+    );
 
     document.querySelector('#loginForm').addEventListener(
       'submit',

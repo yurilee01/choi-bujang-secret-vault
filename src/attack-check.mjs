@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 export async function runAttackChecks(config) {
-  if (![1, 3, 5, 6].includes(config.step)) {
+  if (![1, 3, 5, 6, 7].includes(config.step)) {
     throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
   }
 
@@ -111,7 +111,6 @@ export async function runAttackChecks(config) {
     const publishableKey = quoteStart >= 0 && quoteEnd > quoteStart
       ? html.slice(quoteStart + 1, quoteEnd)
       : null;
-
 
     if (!publishableKey || !publishableKey.startsWith('sb_publishable_')) {
       throw new Error('공개용 Supabase Publishable Key 설정을 확인해 주세요.');
