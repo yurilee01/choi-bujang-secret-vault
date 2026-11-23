@@ -1,4 +1,3 @@
-
 # 최부장 비밀창고
 
 로그인한 사용자만 자신의 비밀 메모를 관리할 수 있도록 만드는 보안 실습 프로젝트입니다. 프로젝트에 포함된 메모는 가상 자료이며, 실제 개인정보나 학생 자료를 사용하지 않습니다.
@@ -8,15 +7,15 @@
 - GitHub: https://github.com/yurilee01/choi-bujang-secret-vault
 - 배포 주소: https://choi-bujang-secret-vault-umber-beta.vercel.app
 - 사용 기술: Node.js, Vercel, Supabase Auth, Supabase Database
-- 현재 작업 단계: 6단계 등록 기기만 자료실 접근 허용
-- 추가 실습: 무차별 로그인 공격 방어(XDR)
+- 현재 작업 단계: 7단계 복합 이상 접속 추가 확인
+- 추가 실습: 무차별 로그인 공격(XDR)
 
 ## 1단계 — 공개 메모 데이터
 
 ### 학생이 하는 일
 
 1. GitHub 계정을 만듭니다.
-2. 방어전 1단계 카드의 **Deploy** 버튼을 누릅니다. Vercel에 GitHub로 로그인하고, 새 저장소가 본인 계정의 Public 저장소인지 확인한 뒤 Deploy를 누릅니다.
+2. 방어전 1단계 카드의 Deploy 버튼을 누릅니다. Vercel에 GitHub로 로그인하고, 새 저장소가 본인 계정의 Public 저장소인지 확인한 뒤 Deploy를 누릅니다.
 3. 배포가 끝나면 화면에 나온 `https://…vercel.app` 주소를 방어전 1단계 카드에 제출합니다. 저장소 주소나 설정 파일을 제출하지 않습니다.
 
 배포가 끝나면 `/`에서 가상 자료실을 확인할 수 있습니다. `/data.json`에는 같은 가상 메모가 공개됩니다. 이 공개 상태를 확인하는 것이 1단계의 출발점입니다.
@@ -74,17 +73,19 @@ Row Level Security(RLS)를 활성화하고 사용자별 접근 정책을 적용�
 - 메모 생성 시 본인의 사용자 ID만 지정할 수 있습니다.
 - 메모 수정·삭제 시에도 본인 소유 여부를 확인합니다.
 
-### 로컬 검사 결과
+### 로컬 검사 기록
 
-| 검사 | 실행 명령 | 결과 |
+이전 단계에서 기록한 검사 결과:
+
+| 검사 | 실행 명령 | 기록된 결과 |
 |---|---|---|
-| 메모 API 테스트 | `node --test test/notes-api.test.mjs` | 9개 통과 |
+| 메모 API 테스트 | `node --test test/notes-api.test.mjs` | 당시 9개 통과 |
 | 패키지 테스트 | `npm run test:package` | 3개 통과 |
 | R5 테스트 | `npm run test:r5` | 2개 통과 |
 | 공격 검사 문법 | `node --check src/attack-check.mjs` | 오류 없음 |
 | 로컬 빌드 | `npm run build -- --local` | 성공 |
 
-위 결과는 로컬 검사 결과이며 실제 배포나 Supabase 연결 성공을 증명하지 않습니다.
+현재 다시 실행한 검사에서는 메모 API 테스트 10개, 패키지 테스트 3개, R5 테스트 2개가 통과했습니다. 이 결과는 로컬 검사이며 실제 배포 성공을 증명하지 않습니다.
 
 ### 아직 확인하지 않은 항목
 
@@ -122,6 +123,66 @@ npm run xdr:run -- brute-force
 
 총 28건의 테스트 경보를 대상으로 판정 결과를 확인합니다.
 
+## 6단계 저장점 — 등록 기기만 자료실 접근
+
+### 현재 구현
+
+- `src/decider.mjs`에 `device_registered` 규칙을 구현했습니다.
+- `request.deviceRegistered === true`인 요청만 이 규칙을 통과합니다.
+- 미등록 기기는 `deny` 및 `device_not_registered`로 거부합니다.
+- 요청·응답 형식은 `docs/DECIDER_REQUEST.md`를 따릅니다.
+- 등록 기기와 미등록 기기의 가상 요청을 판정기 테스트로 확인합니다.
+
+## 7단계 저장점 — 복합 이상 접속 추가 확인
+
+### 현재 구현
+
+- `src/decider.mjs`에 `step_up_required` 규칙을 추가했습니다.
+- 등록 기기 여부 검사를 기존대로 유지합니다.
+- `judge_fixture` 가상 신호에서 비정상 시간, 낯선 네트워크, 최근 활동량 조건이 함께 충족되면 추가 확인을 요구합니다.
+- 복합 이상 접속에 대해 유효한 재인증이 확인되지 않았거나 재인증 후 5분이 지나면 `step_up`을 반환합니다.
+- `stepUp.verified === true`이고 `authAgeSeconds`가 0~300초이면 최근 재인증으로 인정하여 다음 판정으로 진행합니다.
+- 재인증이 유효한 복합 이상 요청은 `allow`로 진행합니다.
+- 지역 정보만으로 접근을 영구 차단하지 않습니다.
+
+### 테스트 기록
+
+- `npm run decider:test`: 6개 가상 요청 통과
+- `npm run fixture:7`: 정상 사건과 복합 이상 사건의 판정 확인
+- `npm run test:r5`: 2개 통과
+- `npm run test:package`: 3개 통과
+- `node --test test/verify-login.test.mjs`: 3개 통과
+- `node --test test/notes-api.test.mjs`: 현재 10개 통과
+- `git diff --check`: 통과
+
+위 테스트는 로컬 가상 요청과 자동화 검사이며 실제 운영 엔진의 사건 수집이나 심판 통과 증거는 아닙니다.
+
+### 미완료 및 확인 필요
+
+- 이상 접속 신호는 `judge_fixture` 기반 가상 데이터입니다.
+- `risk_signal`의 실제 이벤트 의미와 대량 메모 읽기 수집 연동은 확인되지 않았습니다.
+- 실제 재로그인 및 새 요청 재평가 연동은 확인되지 않았습니다.
+- `step_up_required`, `device_not_registered` 운영 허용 코드 등록 여부는 확인되지 않았습니다.
+- 실제 심판 통과 및 7단계 배포는 별도로 확인해야 합니다.
+
+## 8단계 — 자료마다 갈 수 있는 구역을 나눕니다
+
+### 작업 상태
+
+- 판정기에 메모 개별 ID 경로 허용 규칙을 추가했습니다.
+- 메모 목록 및 생성 경로는 판정기에서 거부하도록 구성했습니다.
+- 반 공지 읽기 전용 및 강사 자료 거부 규칙을 가상 요청 테스트에 추가했습니다.
+- `aleph.config.json`을 8단계로 설정하고 메모 개별 경로만 허용 목록에 남겼습니다.
+- 메모 API는 인증된 사용자 ID와 저장된 `owner_id`를 비교하여 조회·수정·삭제합니다.
+- 공지사항 및 강사 자료 API·실제 데이터 경로는 현재 프로젝트에 없으므로 실제 연동은 완료되지 않았습니다.
+- 운영 `allowedReasonCodes` 등록 여부와 실제 심판 통과는 확인되지 않았습니다.
+
+### 로컬 검사 결과
+
+- 판정기 가상 요청 테스트: 14개 통과
+- 메모 API 소유권 테스트: 10개 통과
+- 위 결과는 로컬 테스트이며 실제 심판 통과 증거가 아닙니다.
+
 ## 개발 및 검사 명령어
 
 ```bash
@@ -130,6 +191,7 @@ npm run build -- --local
 npm run test:package
 npm run test:r5
 node --test test/notes-api.test.mjs
+npm run decider:test
 ```
 
 ## 보안 원칙
@@ -139,39 +201,5 @@ node --test test/notes-api.test.mjs
 - 서버 전용 키를 브라우저 코드에 포함하지 않습니다.
 - 사용자 인증 정보는 서버에서 검증합니다.
 - 사용자 ID는 검증된 인증 정보에서 가져옵니다.
+- 요청 본문의 role이나 화면 메뉴를 권한 근거로 사용하지 않습니다.
 - 로컬 테스트 성공과 실제 배포 성공을 구분합니다.
-
-## 6단계 저장점 — 등록 기기만 자료실 접근
-
-- `src/decider.mjs`에 `device_registered` 규칙을 구현했습니다.
-- `request.deviceRegistered === true`인 요청만 허용합니다.
-- 미등록 기기는 `deny` 및 `device_not_registered`로 거부합니다.
-- 요청·응답 형식은 `docs/DECIDER_REQUEST.md`를 따릅니다.
-- `npm run decider:test`에서 등록 기기와 미등록 기기 가상 요청이 모두 통과했습니다.
-- 위 테스트는 로컬 연습이며 실제 심판 판정 증거는 아닙니다.
-
-## 7단계 실습 — 복합 이상 접속 추가 확인
-
-### 현재 구현
-
-- `src/decider.mjs`에 `step_up_required` 가상 규칙을 추가했습니다.
-- 등록 기기 여부 검사를 기존대로 유지합니다.
-- `judge_fixture` 가상 신호에서 비정상 시간, 낯선 네트워크, 최근 활동량 조건이 함께 충족되면 `step_up`을 반환합니다.
-- `stepUp.verified`가 true여도 이상 접속에 대한 추가 확인을 자동으로 생략하지 않습니다.
-- 지역 정보만으로 접근을 영구 차단하지 않습니다.
-
-### 테스트 결과
-
-- `npm run decider:test`: 4개 가상 요청 테스트 통과
-- `npm run fixture:7`: 정상 사건 allow, 복합 이상 사건 step_up
-- `git diff --check`: 통과
-
-위 테스트는 로컬 가상 요청을 이용한 연습이며 실제 심판 통과 증거는 아닙니다.
-
-### 미완료 및 확인 필요
-
-- 이상 접속 신호는 `judge_fixture` 기반 가상 데이터입니다.
-- `risk_signal`의 실제 이벤트 의미와 대량 메모 읽기 수집 연동은 확인되지 않았습니다.
-- 실제 재로그인 및 새 요청 재평가 연동은 확인되지 않았습니다.
-- `step_up_required`, `device_not_registered` 운영 허용 코드 등록 여부는 확인되지 않았습니다.
-- 실제 심판 통과 및 7단계 배포는 확인되지 않았습니다.

@@ -18,6 +18,34 @@ function validResponse(request, response, ruleIds) {
     && response.ruleIds.every(id => ruleIds.includes(id));
 }
 
+function resourceRequest(service, method, path, route) {
+  return {
+    schema: 'aleph.decision.v1',
+    requestId: randomUUID(),
+    classId: 'class_fixture',
+    projectId: 'project_fixture',
+    subjectId: 'subject_fixture',
+    deviceId: '0123456789abcdef',
+    service,
+    method,
+    path,
+    route,
+    queryLength: 0,
+    querySha256: 'a'.repeat(64),
+    at: new Date().toISOString(),
+    policyRevision: 'fixture',
+    deviceRegistered: true,
+    stepUp: { verified: false, authAgeSeconds: null },
+    recentEvents: [],
+    signals: {
+      source: 'none',
+      region: 'unknown',
+      network: 'unknown',
+      hour: 12,
+    },
+  };
+}
+
 // 로컬 가상 요청으로만 확인하는 연습 테스트입니다.
 export async function checkDecider({ decide, ruleIds }) {
   if (typeof decide !== 'function' || !Array.isArray(ruleIds)
@@ -81,6 +109,71 @@ export async function checkDecider({ decide, ruleIds }) {
       },
     );
   }
+
+  const resourceChecks = [
+    {
+      name: '개별 메모 조회 허용',
+      request: resourceRequest('notes', 'GET', '/notes/demo', 'GET /notes/:id'),
+      decision: 'allow',
+    },
+    {
+      name: '개별 메모 수정 허용',
+      request: resourceRequest('notes', 'PUT', '/notes/demo', 'PUT /notes/:id'),
+      decision: 'allow',
+    },
+    {
+      name: '메모 목록 경로 거부',
+      request: resourceRequest('notes', 'GET', '/notes', 'GET /notes'),
+      decision: 'deny',
+    },
+    {
+      name: '메모 생성 경로 거부',
+      request: resourceRequest('notes', 'POST', '/notes', 'POST /notes'),
+      decision: 'deny',
+    },
+    {
+      name: '공지사항 조회 허용',
+      request: resourceRequest(
+        'class_announcements',
+        'GET',
+        '/announcements/demo',
+        'GET /announcements/:id',
+      ),
+      decision: 'allow',
+    },
+    {
+      name: '공지사항 수정 거부',
+      request: resourceRequest(
+        'class_announcements',
+        'PUT',
+        '/announcements/demo',
+        'PUT /announcements/:id',
+      ),
+      decision: 'deny',
+    },
+    {
+      name: '강사 자료 접근 거부',
+      request: resourceRequest(
+        'instructor_materials',
+        'GET',
+        '/materials/demo',
+        'GET /materials/:id',
+      ),
+      decision: 'deny',
+    },
+    {
+      name: '알 수 없는 서비스 거부',
+      request: resourceRequest(
+        'unknown_service',
+        'GET',
+        '/unknown/demo',
+        'GET /unknown/:id',
+      ),
+      decision: 'deny',
+    },
+  ];
+
+  checks.push(...resourceChecks);
 
   const results = [];
 
