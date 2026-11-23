@@ -7,7 +7,7 @@ function readEvents(events) {
   return events.map(event => ({
     at: event?.at,
     method: event?.method,
-    sub: event?.identity?.sub,
+    sub: event?.sub ?? event?.identity?.sub,
   }));
 }
 
