@@ -15,7 +15,6 @@ const BACKUP_PATH = path.join(DATA_DIR, 'b-note-backup.json');
 const FIXTURE_PATH = path.join(DATA_DIR, 'notes-fixture.json');
 const AUDIT_PATH = path.join(DATA_DIR, 'audit-fixture.json');
 const MANIFEST_PATH = path.join(DATA_DIR, 'restore-manifest.json');
-const README_PATH = path.join(ROOT, 'README.md');
 
 const A_ID = '11111111-1111-4111-8111-111111111111';
 const B_ID = '22222222-2222-4222-8222-222222222222';
@@ -256,6 +255,7 @@ function createMockResponse() {
   };
 }
 
+// Supabase 대신 메모리 안의 로컬 가짜 DB를 사용한다.
 function createFixtureDatabase(notes) {
   return {
     from(table) {
@@ -264,14 +264,42 @@ function createFixtureDatabase(notes) {
       }
 
       let inserted = null;
+      const filters = [];
 
       const query = {
-        insert(value) {
-          inserted = structuredClone(value);
+        select() {
           return query;
         },
 
-        select() {
+        eq(column, value) {
+          filters.push({ column, value });
+          return query;
+        },
+
+        async maybeSingle() {
+          const matches = notes.filter(note =>
+            filters.every(filter =>
+              note[filter.column] === filter.value
+            )
+          );
+
+          if (matches.length > 1) {
+            return {
+              data: null,
+              error: new Error('multiple_rows_found_stop'),
+            };
+          }
+
+          return {
+            data: matches[0]
+              ? structuredClone(matches[0])
+              : null,
+            error: null,
+          };
+        },
+
+        insert(value) {
+          inserted = structuredClone(value);
           return query;
         },
 
@@ -281,15 +309,17 @@ function createFixtureDatabase(notes) {
           }
 
           if (notes.some(note => note.id === inserted.id)) {
-            throw new Error('duplicate_note_id_stop');
+            return {
+              data: null,
+              error: new Error('duplicate_note_id_stop'),
+            };
           }
 
-          notes.push({
-            ...inserted,
-          });
+          const saved = structuredClone(inserted);
+          notes.push(saved);
 
           return {
-            data: { id: inserted.id },
+            data: structuredClone(saved),
             error: null,
           };
         },
@@ -300,11 +330,11 @@ function createFixtureDatabase(notes) {
   };
 }
 
-async function postRestore(note, notes) {
+async function postRestore(backup, notes) {
   const oldUrl = process.env.SUPABASE_URL;
   const oldKey = process.env.SUPABASE_SECRET_KEY;
 
-  // 가짜 값만 사용하며 실제 Supabase에 연결하지 않습니다.
+  // 실제 Supabase가 아닌 로컬 가짜 DB만 사용한다.
   process.env.SUPABASE_URL = 'https://fixture.invalid';
   process.env.SUPABASE_SECRET_KEY = 'local-fixture-only';
 
@@ -315,29 +345,26 @@ async function postRestore(note, notes) {
           return null;
         }
 
-        return { userId: B_ID };
+        return {
+          kind: 'judge',
+          identity: 'b',
+          userId: B_ID,
+        };
       },
 
-      createSupabaseClient: () => ({
-        ...createFixtureDatabase(notes),
-      }),
+      createSupabaseClient: () => createFixtureDatabase(notes),
     });
 
     const response = createMockResponse();
 
     await handler({
       method: 'POST',
-      url: '/api/notes',
+      url: '/api/notes/restore',
       headers: {
         authorization: 'Bearer local-restore-test',
       },
       body: {
-        id: note.id,
-        title: note.title,
-        body: note.body,
-
-        // 위조된 소유자 값은 API가 사용하지 않아야 합니다.
-        owner_id: A_ID,
+        backup: structuredClone(backup),
       },
     }, response);
 
@@ -345,9 +372,18 @@ async function postRestore(note, notes) {
       throw new Error(`post_restore_failed_${response.statusCode}`);
     }
 
-    if (response.body?.id !== note.id) {
-      throw new Error('post_restore_id_mismatch_stop');
+    if (
+      response.body?.id !== backup.note.id
+      || response.body?.owner_id !== B_ID
+      || response.body?.contentSha256 !== backup.contentSha256
+      || response.body?.restored !== true
+    ) {
+      throw new Error('post_restore_result_mismatch_stop');
     }
+
+    console.log('통과 · POST /api/notes/restore 응답 201');
+    console.log('통과 · 복원 메모 ID 및 소유자 확인');
+    console.log('통과 · 복원 내용 SHA-256 확인');
 
     return response.body;
   } finally {
@@ -363,38 +399,6 @@ async function postRestore(note, notes) {
       process.env.SUPABASE_SECRET_KEY = oldKey;
     }
   }
-}
-
-async function updateReadme() {
-  const readme = await readFile(README_PATH, 'utf8');
-  const heading = '## 10단계 가상 메모 복원';
-
-  const section = `## 10단계 가상 메모 복원
-
-- 복원 대상: B 테스트 계정의 가상 메모 1개
-- 메모 ID: ${B_NOTE.id}
-- 소유자 ID: ${B_ID}
-- 백업 경로: \`artifacts/note-restore/b-note-backup.json\`
-- 시험 자료 경로: \`artifacts/note-restore/notes-fixture.json\`
-- 감사 기록 경로: \`artifacts/note-restore/audit-fixture.json\`
-- 복원 기준: \`artifacts/note-restore/restore-manifest.json\`
-- 복원 서비스: 기존 \`api/notes.js\`
-- 복원 경로: \`POST /api/notes\`
-- 소유권 확인: API가 인증된 B 사용자 ID를 owner_id로 지정하는지 검증
-- 무결성 확인: 메모 ID, 소유자 ID, 내용 SHA-256 비교
-- 보존 확인: 나머지 메모 SHA-256 및 감사 기록 SHA-256 비교
-- 실행 순서: \`node scripts/note-restore.mjs --init\`, \`node scripts/note-restore.mjs --backup\`, \`node scripts/note-restore.mjs --simulate-loss\`, \`node scripts/note-restore.mjs --restore\`
-- 실행 범위: 로컬 가상 자료와 가짜 DB만 사용하며 실제 운영 DB에는 접근하지 않음
-- 주의: 로컬 POST 핸들러 검증이며 실제 배포 API 또는 운영 DB 복원 증거가 아님
-`;
-
-  const index = readme.indexOf(heading);
-  const updated = index >= 0
-    ? `${readme.slice(0, index).trimEnd()}\n\n${section}`
-    : `${readme.trimEnd()}\n\n${section}`;
-
-  await writeFile(README_PATH, updated);
-  console.log('완료 · README 복원 서비스와 경로 기록');
 }
 
 async function restoreBNote() {
@@ -429,7 +433,7 @@ async function restoreBNote() {
   console.log('\n===== POST 복원 전 변경 계획 =====');
   console.log(`복원 메모 ID: ${backup.note.id}`);
   console.log(`복원 소유자 ID: ${B_ID}`);
-  console.log(`복원 경로: POST /api/notes`);
+  console.log('복원 경로: POST /api/notes/restore');
   console.log('변경 대상: B 가상 메모 1개');
   console.log('보존 대상: 다른 메모 및 감사 기록');
   console.log('DB 연결: 로컬 가짜 DB');
@@ -437,7 +441,7 @@ async function restoreBNote() {
 
   const nextNotes = structuredClone(fixture.notes);
 
-  await postRestore(backup.note, nextNotes);
+  await postRestore(backup, nextNotes);
 
   await writeJson(FIXTURE_PATH, {
     ...fixture,
@@ -481,15 +485,13 @@ async function restoreBNote() {
     throw new Error('audit_record_changed_stop');
   }
 
-  console.log('\n통과 · POST /api/notes 응답 201');
+  console.log('\n통과 · POST /api/notes/restore 응답 201');
   console.log('통과 · B 메모 ID 일치');
   console.log('통과 · B 소유자 ID 일치');
   console.log('통과 · B 메모 내용 SHA-256 일치');
   console.log('통과 · 다른 모든 메모 보존');
   console.log('통과 · 전체 메모 개수 보존');
   console.log('통과 · 감사 기록 보존');
-
-  await updateReadme();
 }
 
 async function main() {

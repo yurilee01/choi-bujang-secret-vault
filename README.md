@@ -224,10 +224,7 @@ npm run detect:test
 
 ### 정책 백업 및 침공 모의
 
-- `scripts/policy-backup.mjs`에서 1~9단계 정책 파일 3개를 백업합니다.
-- 백업 대상은 `src/decider.mjs`, `aleph.config.json`, `supabase/notes.sql`입니다.
-- SHA-256 해시를 이용해 백업 무결성을 확인합니다.
-- 시험 사본의 `allowedRoutes` 한 항목만 변경해 정책 침공을 모의합니다.
+- 정책 백업과 침공 모의는 기존 기록을 유지합니다.
 - 시험 사본 복원은 `artifacts/policy-drill/` 안에서만 수행합니다.
 - 실제 운영 정책과 운영 DB는 변경하지 않습니다.
 
@@ -236,37 +233,47 @@ npm run detect:test
 - 복원 대상: B 테스트 계정의 가상 메모 1개
 - 메모 ID: `bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb`
 - 소유자 ID: `22222222-2222-4222-8222-222222222222`
+- 백업 버전: `note-backup-v1`
 - 백업 경로: `artifacts/note-restore/b-note-backup.json`
 - 시험 자료 경로: `artifacts/note-restore/notes-fixture.json`
 - 감사 기록 경로: `artifacts/note-restore/audit-fixture.json`
 - 복원 기준: `artifacts/note-restore/restore-manifest.json`
-- 복원 서비스: 기존 `api/notes.js`
-- 복원 경로: `POST /api/notes`
-- 소유권 확인: API가 인증된 B 사용자 ID를 `owner_id`로 지정하는지 검증
+- 복원 서비스: `api/notes.js`
+- 복원 경로: `POST /api/notes/restore`
+- Vercel 경로 연결: `/api/notes/restore` → `/api/notes?restore=1`
+- 권한 확인: 심사관 B 인증 및 백업 소유자 ID 대조
 - 무결성 확인: 메모 ID, 소유자 ID, 내용 SHA-256 비교
-- 보존 확인: 나머지 메모 SHA-256 및 감사 기록 SHA-256 비교
+- 보존 확인: 다른 메모 해시, 전체 메모 수, 감사 기록 해시 비교
 
-### 실행 순서
+### 로컬 가상 자료 검사 기록
 
-```bash
-node scripts/note-restore.mjs --init
-node scripts/note-restore.mjs --backup
-node scripts/note-restore.mjs --simulate-loss
-node scripts/note-restore.mjs --restore
-```
+- 백업 버전 및 백업 내용 해시: 통과
+- 복원된 메모 ID: 통과
+- 복원된 메모 소유자 ID: 통과
+- 복원된 메모 내용 SHA-256: 통과
+- 다른 메모 보존: 통과
+- 전체 메모 수 보존: 통과
+- 감사 기록 보존: 통과
+- 복원 API 테스트: 7개 통과
+- 기존 메모 API 테스트: 10개 통과
 
-### 실행 확인 결과
+검사 범위는 로컬 가상 자료와 가짜 DB입니다. 실제 운영 DB, 실제 배포 API, 운영 정책을 변경하거나 복원하지 않았습니다. 실제 배포 API 호출이나 심판 통과를 증명하지 않습니다.
 
-- B 가상 메모 손실 모의 완료
-- POST `/api/notes` 응답 201 확인
-- B 메모 ID 일치
-- B 소유자 ID 일치
-- B 메모 내용 SHA-256 일치
-- 다른 모든 메모 보존
-- 전체 메모 개수 보존
-- 감사 기록 보존
+### 복구 후 1~9단계 재시험 순서
 
-실행 범위는 로컬 가상 자료와 가짜 DB입니다. 실제 운영 DB, 실제 배포 API, 운영 정책은 변경하거나 복원하지 않았습니다. 이 결과는 로컬 복원 경로 검증이며 실제 운영 복원이나 심판 통과 증거가 아닙니다.
+1. 1단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+2. 2단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+3. 3단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+4. 4단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+5. 5단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+6. 6단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+7. 7단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+8. 8단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+9. 9단계 기존 시험의 정상 요청 실행 후 금지 요청 실행
+
+- 재시험 상태: 미실행
+- 재시험 결과: 실행하지 않았으므로 결과를 기록하지 않음
+- 각 단계의 기존 시험 입력과 경로를 사용하고 실제 응답만 기록
 
 ## 단계별 재실행 순서
 

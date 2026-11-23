@@ -1,4 +1,6 @@
+
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { createLoginVerifier } from '../src/verify-login.mjs';
 
@@ -8,6 +10,8 @@ const config = JSON.parse(
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 
 let verifier;
 
@@ -29,8 +33,27 @@ function getNoteId(request) {
   return url.searchParams.get('id');
 }
 
+function isRestoreRequest(request) {
+  const url = new URL(request.url, 'https://example.com');
+
+  return (
+    url.pathname === '/api/notes/restore'
+    || request.query?.restore === '1'
+    || url.searchParams.get('restore') === '1'
+  );
+}
+
 function validText(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function contentHash(note) {
+  return createHash('sha256')
+    .update(JSON.stringify({
+      title: note.title,
+      body: note.body,
+    }), 'utf8')
+    .digest('hex');
 }
 
 // 테스트에서는 가짜 로그인 검증기와 Supabase를 주입할 수 있다.
@@ -92,6 +115,123 @@ export function createNotesHandler({
         }
       );
 
+      // 전용 복원 경로: 심사관 B 계정만 허용한다.
+      if (isRestoreRequest(request)) {
+        if (request.method !== 'POST') {
+          return response.status(405).json({
+            error: 'RESTORE_METHOD_NOT_ALLOWED',
+          });
+        }
+
+        if (
+          verifiedUser.kind !== 'judge'
+          || verifiedUser.identity !== 'b'
+        ) {
+          return response.status(403).json({
+            error: 'RESTORE_FORBIDDEN',
+          });
+        }
+
+        const backup = request.body?.backup;
+        const note = backup?.note;
+
+        if (
+          backup?.version !== 'note-backup-v1'
+          || !note
+          || typeof note !== 'object'
+          || Array.isArray(note)
+          || !UUID_PATTERN.test(note.id ?? '')
+          || !UUID_PATTERN.test(note.owner_id ?? '')
+          || note.owner_id !== verifiedUser.userId
+          || !validText(note.title)
+          || !validText(note.body)
+          || note.title !== note.title.trim()
+          || note.body !== note.body.trim()
+          || !SHA256_PATTERN.test(backup.contentSha256 ?? '')
+        ) {
+          return response.status(400).json({
+            error: 'INVALID_RESTORE_BACKUP',
+          });
+        }
+
+        // 백업에 기록된 해시를 서버에서 다시 계산한다.
+        if (contentHash(note) !== backup.contentSha256) {
+          return response.status(400).json({
+            error: 'RESTORE_BACKUP_HASH_MISMATCH',
+          });
+        }
+
+        // 기존 메모가 있으면 덮어쓰지 않고 중단한다.
+        const { data: existing, error: lookupError } = await supabase
+          .from('notes')
+          .select('id')
+          .eq('id', note.id)
+          .maybeSingle();
+
+        if (lookupError) throw lookupError;
+
+        if (existing) {
+          return response.status(409).json({
+            error: 'RESTORE_TARGET_ALREADY_EXISTS',
+          });
+        }
+
+        // 백업에 들어 있는 ID와 소유자를 그대로 사용한다.
+        const restoredNote = {
+          id: note.id,
+          owner_id: note.owner_id,
+          title: note.title,
+          body: note.body,
+        };
+
+        const { data: inserted, error: insertError } = await supabase
+          .from('notes')
+          .insert(restoredNote)
+          .select('id,owner_id,title,body')
+          .single();
+
+        if (insertError) throw insertError;
+
+        // 삽입 응답의 ID·소유자·내용 해시를 다시 확인한다.
+        if (
+          inserted?.id !== note.id
+          || inserted?.owner_id !== note.owner_id
+          || contentHash(inserted) !== backup.contentSha256
+        ) {
+          return response.status(409).json({
+            error: 'RESTORE_RESULT_MISMATCH',
+          });
+        }
+
+        // DB에서 다시 읽어 최종 상태를 검증한다.
+        const { data: verified, error: verifyError } = await supabase
+          .from('notes')
+          .select('id,owner_id,title,body')
+          .eq('id', note.id)
+          .eq('owner_id', verifiedUser.userId)
+          .maybeSingle();
+
+        if (verifyError) throw verifyError;
+
+        if (
+          !verified
+          || verified.id !== note.id
+          || verified.owner_id !== note.owner_id
+          || contentHash(verified) !== backup.contentSha256
+        ) {
+          return response.status(409).json({
+            error: 'RESTORE_VERIFICATION_FAILED',
+          });
+        }
+
+        return response.status(201).json({
+          id: verified.id,
+          owner_id: verified.owner_id,
+          contentSha256: contentHash(verified),
+          restored: true,
+        });
+      }
+
       const noteId = getNoteId(request);
 
       // 로그인한 사용자의 메모 목록 조회
@@ -105,7 +245,7 @@ export function createNotesHandler({
         return response.status(200).json(data);
       }
 
-      // 새 메모 추가
+      // 일반 메모 추가: 기존 기능 유지
       if (request.method === 'POST') {
         const { id, title, body } = request.body ?? {};
 
