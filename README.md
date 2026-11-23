@@ -8,7 +8,7 @@
 - GitHub: https://github.com/yurilee01/choi-bujang-secret-vault
 - 배포 주소: https://choi-bujang-secret-vault-umber-beta.vercel.app
 - 사용 기술: Node.js, Vercel, Supabase Auth, Supabase Database
-- 현재 작업 단계: 9단계 대량 조회 폭주 탐지
+- 현재 작업 단계: 10단계 백업 자료 복원
 - 추가 실습: 무차별 로그인 공격(XDR)
 
 ## 1단계 — 공개 메모 데이터
@@ -80,13 +80,13 @@ Row Level Security(RLS)를 활성화하고 사용자별 접근 정책을 적용�
 
 | 검사 | 실행 명령 | 기록된 결과 |
 |---|---|---|
-| 메모 API 테스트 | `node --test test/notes-api.test.mjs` | 당시 9개 통과 |
+| 메모 API 테스트 | `node --test test/notes-api.test.mjs` | 현재 10개 통과 |
 | 패키지 테스트 | `npm run test:package` | 3개 통과 |
 | R5 테스트 | `npm run test:r5` | 2개 통과 |
 | 공격 검사 문법 | `node --check src/attack-check.mjs` | 오류 없음 |
 | 로컬 빌드 | `npm run build -- --local` | 성공 |
 
-현재 다시 실행한 검사에서는 메모 API 테스트 10개, 패키지 테스트 3개, R5 테스트 2개가 통과했습니다. 이 결과는 로컬 검사이며 실제 배포 성공을 증명하지 않습니다.
+현재까지 확인한 결과는 로컬 검사이며 실제 배포 성공을 증명하지 않습니다.
 
 ### 아직 확인하지 않은 항목
 
@@ -148,7 +148,7 @@ npm run xdr:run -- brute-force
 
 ### 테스트 기록
 
-- `npm run decider:test`: 6개 가상 요청 통과
+- `npm run decider:test`: 가상 요청 판정 테스트
 - `npm run fixture:7`: 정상 사건과 복합 이상 사건의 판정 확인
 - `npm run test:r5`: 2개 통과
 - `npm run test:package`: 3개 통과
@@ -180,8 +180,8 @@ npm run xdr:run -- brute-force
 
 ### 로컬 검사 결과
 
-- 판정기 가상 요청 테스트: 14개 통과
-- 메모 API 소유권 테스트: 10개 통과
+- 판정기 가상 요청 테스트: 당시 14개 통과
+- 메모 API 소유권 테스트: 현재 10개 통과
 - 위 결과는 로컬 테스트이며 실제 심판 통과 증거가 아닙니다.
 
 ## 9단계 저장점 — 대량 조회 폭주 탐지
@@ -189,7 +189,7 @@ npm run xdr:run -- brute-force
 ### 현재 구현
 
 - `src/detect.mjs`에 가상 사건 탐지 함수 `detect(events)`를 구현했습니다.
-- 사건에서 `at`, `method`, `identity.sub` 세 항목만 읽습니다.
+- 사건에서 `at`, `method`, `sub`를 우선 읽고, `sub`가 없으면 `identity.sub`를 대체값으로 읽습니다.
 - 동일한 가명 주체가 10분 안에 GET 요청을 121건 이상 발생시키면 회수 제안 결과를 반환합니다.
 - 정확히 120건이면 정상 관찰 결과를 반환합니다.
 - 서로 다른 주체의 요청은 각각 따로 계산합니다.
@@ -220,6 +220,125 @@ npm run detect:test
 
 위 결과는 가상 사건을 이용한 로컬 테스트이며 실제 접속 회수나 심판 통과 증거가 아닙니다.
 
+## 10단계 — 백업에서 자료실 복원
+
+### 정책 백업 및 침공 모의
+
+- `scripts/policy-backup.mjs`에서 1~9단계 정책 파일 3개를 백업합니다.
+- 백업 대상은 `src/decider.mjs`, `aleph.config.json`, `supabase/notes.sql`입니다.
+- SHA-256 해시를 이용해 백업 무결성을 확인합니다.
+- 시험 사본의 `allowedRoutes` 한 항목만 변경해 정책 침공을 모의합니다.
+- 시험 사본 복원은 `artifacts/policy-drill/` 안에서만 수행합니다.
+- 실제 운영 정책과 운영 DB는 변경하지 않습니다.
+
+### 가상 메모 백업 및 POST 복원
+
+- 복원 대상: B 테스트 계정의 가상 메모 1개
+- 메모 ID: `bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb`
+- 소유자 ID: `22222222-2222-4222-8222-222222222222`
+- 백업 경로: `artifacts/note-restore/b-note-backup.json`
+- 시험 자료 경로: `artifacts/note-restore/notes-fixture.json`
+- 감사 기록 경로: `artifacts/note-restore/audit-fixture.json`
+- 복원 기준: `artifacts/note-restore/restore-manifest.json`
+- 복원 서비스: 기존 `api/notes.js`
+- 복원 경로: `POST /api/notes`
+- 소유권 확인: API가 인증된 B 사용자 ID를 `owner_id`로 지정하는지 검증
+- 무결성 확인: 메모 ID, 소유자 ID, 내용 SHA-256 비교
+- 보존 확인: 나머지 메모 SHA-256 및 감사 기록 SHA-256 비교
+
+### 실행 순서
+
+```bash
+node scripts/note-restore.mjs --init
+node scripts/note-restore.mjs --backup
+node scripts/note-restore.mjs --simulate-loss
+node scripts/note-restore.mjs --restore
+```
+
+### 실행 확인 결과
+
+- B 가상 메모 손실 모의 완료
+- POST `/api/notes` 응답 201 확인
+- B 메모 ID 일치
+- B 소유자 ID 일치
+- B 메모 내용 SHA-256 일치
+- 다른 모든 메모 보존
+- 전체 메모 개수 보존
+- 감사 기록 보존
+
+실행 범위는 로컬 가상 자료와 가짜 DB입니다. 실제 운영 DB, 실제 배포 API, 운영 정책은 변경하거나 복원하지 않았습니다. 이 결과는 로컬 복원 경로 검증이며 실제 운영 복원이나 심판 통과 증거가 아닙니다.
+
+## 단계별 재실행 순서
+
+아래 명령은 로컬 검증을 다시 수행할 때 참고하는 순서입니다. 각 명령의 실행 결과를 확인한 뒤 다음 단계로 진행합니다.
+
+### 1. 프로젝트 의존성 설치
+
+```bash
+npm install
+```
+
+### 2. 로컬 빌드
+
+```bash
+npm run build -- --local
+```
+
+### 3. 로그인 검증 테스트
+
+```bash
+node --test test/verify-login.test.mjs
+```
+
+### 4. 메모 API 소유권 테스트
+
+```bash
+node --test test/notes-api.test.mjs
+```
+
+### 5. 패키지 및 R5 테스트
+
+```bash
+npm run test:package
+npm run test:r5
+```
+
+### 6~8. 판정기 테스트
+
+```bash
+npm run decider:test
+```
+
+### 7. 추가 확인 가상 사건 테스트
+
+```bash
+npm run fixture:7
+```
+
+### 9. 대량 조회 탐지 테스트
+
+```bash
+node --check src/detect.mjs
+npm run detect:test
+```
+
+### 10. 복원 검증
+
+백업과 가상 자료가 이미 생성된 경우 `--init`과 `--backup`을 다시 실행하지 않습니다. 기존 백업을 보존한 상태에서 손실 모의와 복원을 수행합니다.
+
+```bash
+node scripts/note-restore.mjs --simulate-loss
+node scripts/note-restore.mjs --restore
+```
+
+### 추가 XDR 실습
+
+```bash
+npm run xdr:run -- brute-force
+```
+
+주의: 위 명령은 재실행 안내입니다. 실제로 실행한 명령과 결과만 검사 완료로 기록합니다. `src/attack-check.mjs`는 배포 URL과 외부 서비스에 요청할 수 있으므로 별도 확인 없이 실행하지 않습니다.
+
 ## 개발 및 검사 명령어
 
 ```bash
@@ -227,9 +346,12 @@ npm install
 npm run build -- --local
 npm run test:package
 npm run test:r5
+node --test test/verify-login.test.mjs
 node --test test/notes-api.test.mjs
 npm run decider:test
+npm run fixture:7
 npm run detect:test
+npm run bundle
 ```
 
 ## 보안 원칙
@@ -242,3 +364,4 @@ npm run detect:test
 - 요청 본문의 role이나 화면 메뉴를 권한 근거로 사용하지 않습니다.
 - 로컬 테스트 성공과 실제 배포 성공을 구분합니다.
 - 가상 사건 테스트 결과를 실제 운영 엔진의 보안 조치 완료로 표현하지 않습니다.
+- 운영 정책과 운영 DB를 복원 실습 대상으로 사용하지 않습니다.
