@@ -117,9 +117,9 @@ export async function checkDecider({ decide, ruleIds }) {
       decision: 'allow',
     },
     {
-      name: '개별 메모 수정 허용',
+      name: '개별 메모 수정 거부',
       request: resourceRequest('notes', 'PUT', '/notes/demo', 'PUT /notes/:id'),
-      decision: 'allow',
+      decision: 'deny',
     },
     {
       name: '메모 목록 경로 거부',
@@ -132,14 +132,32 @@ export async function checkDecider({ decide, ruleIds }) {
       decision: 'deny',
     },
     {
-      name: '공지사항 조회 허용',
+      name: '개별 메모 삭제 거부',
+      request: resourceRequest('notes', 'DELETE', '/notes/demo', 'DELETE /notes/:id'),
+      decision: 'deny',
+    },
+    {
+      name: '메모 쿼리 요청 거부',
+      request: {
+        ...resourceRequest('notes', 'GET', '/notes/demo', 'GET /notes/:id'),
+        queryLength: 1,
+      },
+      decision: 'deny',
+    },
+    {
+      name: '같은 깊이의 미등록 경로 거부',
+      request: resourceRequest('notes', 'GET', '/notes/export', 'GET /notes/export'),
+      decision: 'deny',
+    },
+    {
+      name: '공지사항 조회 거부',
       request: resourceRequest(
         'class_announcements',
         'GET',
         '/announcements/demo',
         'GET /announcements/:id',
       ),
-      decision: 'allow',
+      decision: 'deny',
     },
     {
       name: '공지사항 수정 거부',
@@ -151,6 +169,16 @@ export async function checkDecider({ decide, ruleIds }) {
       ),
       decision: 'deny',
     },
+    ...['POST', 'PATCH', 'DELETE'].map(method => ({
+      name: `공지사항 ${method} 쓰기 거부`,
+      request: resourceRequest(
+        'class_announcements',
+        method,
+        '/announcements/demo',
+        `${method} /announcements/:id`,
+      ),
+      decision: 'deny',
+    })),
     {
       name: '강사 자료 접근 거부',
       request: resourceRequest(
