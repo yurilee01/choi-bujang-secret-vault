@@ -10,7 +10,9 @@ import path from 'node:path';
 import { createNotesHandler } from '../api/notes.js';
 
 const ROOT = process.cwd();
-const DATA_DIR = path.join(ROOT, 'artifacts', 'note-restore');
+const DATA_DIR = process.env.NOTE_RESTORE_DATA_DIR
+  ? path.resolve(process.env.NOTE_RESTORE_DATA_DIR)
+  : path.join(ROOT, 'artifacts', 'note-restore');
 const BACKUP_PATH = path.join(DATA_DIR, 'b-note-backup.json');
 const FIXTURE_PATH = path.join(DATA_DIR, 'notes-fixture.json');
 const AUDIT_PATH = path.join(DATA_DIR, 'audit-fixture.json');
@@ -95,7 +97,8 @@ function validateNote(note, expected) {
   }
 }
 
-async function verifyBackup() {
+async function verifyBackup(expectedManifest = null) {
+  // 복원 시에는 이 시점에 백업 파일을 디스크에서 다시 읽는다.
   const backup = await readJson(BACKUP_PATH);
 
   if (backup.version !== 'note-backup-v1') {
@@ -104,8 +107,22 @@ async function verifyBackup() {
 
   validateNote(backup.note, B_NOTE);
 
-  if (contentHash(backup.note) !== backup.contentSha256) {
+  const actualHash = contentHash(backup.note);
+
+  if (
+    typeof backup.contentSha256 !== 'string'
+    || actualHash !== backup.contentSha256
+  ) {
     throw new Error('note_backup_hash_mismatch_stop');
+  }
+
+  if (expectedManifest) {
+    if (
+      expectedManifest.backupVersion !== backup.version
+      || expectedManifest.backupContentSha256 !== actualHash
+    ) {
+      throw new Error('backup_manifest_mismatch_stop');
+    }
   }
 
   return backup;
@@ -207,6 +224,8 @@ async function simulateLoss() {
     version: 'note-restore-manifest-v1',
     targetId: B_NOTE.id,
     ownerId: B_ID,
+    backupVersion: backup.version,
+    backupContentSha256: backup.contentSha256,
     originalNoteCount: fixture.notes.length,
     preservedNotesSha256: notesHash(preservedNotes),
     auditSha256: sha256(JSON.stringify(audit)),
@@ -402,7 +421,6 @@ async function postRestore(backup, notes) {
 }
 
 async function restoreBNote() {
-  const backup = await verifyBackup();
   const manifest = await readJson(MANIFEST_PATH);
   const fixture = await readJson(FIXTURE_PATH);
   const auditBefore = await readJson(AUDIT_PATH);
@@ -430,6 +448,16 @@ async function restoreBNote() {
     throw new Error('audit_hash_mismatch_stop');
   }
 
+  // 모든 사전 조건 확인 후, 복원 직전에 백업을 다시 읽고
+  // 매니페스트에 기록된 버전 및 해시와 대조한다.
+  const backup = await verifyBackup(manifest);
+
+  console.log('\n===== POST 복원 전 백업 재검증 결과 =====');
+  console.log(`백업 버전: ${backup.version}`);
+  console.log(`백업 내용 SHA-256: ${backup.contentSha256}`);
+  console.log('백업 재읽기: 통과');
+  console.log('백업 버전 대조: 통과');
+  console.log('백업 내용 해시 대조: 통과');
   console.log('\n===== POST 복원 전 변경 계획 =====');
   console.log(`복원 메모 ID: ${backup.note.id}`);
   console.log(`복원 소유자 ID: ${B_ID}`);
