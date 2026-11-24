@@ -1,0 +1,19 @@
+{
+  "name": "BYTE BACK | 나의 비밀창고",
+  "short_name": "BYTE BACK",
+  "lang": "ko",
+  "description": "로그인과 서버 인증을 사용하는 개인 가상 메모 자료실",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#101a28",
+  "theme_color": "#101a28",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

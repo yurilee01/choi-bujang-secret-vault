@@ -3,220 +3,107 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a28">
+  <link rel="manifest" href="/manifest.webmanifest">
   <title>BYTE BACK | 나의 비밀창고</title>
   <style>
-    :root {
-      color-scheme: dark;
-      font-family: system-ui, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #101a28;
-      color: #ecf4ff;
-    }
-
-    main {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 44px 22px 64px;
-    }
-
-    .eyebrow {
-      color: #8ad8df;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: .08em;
-    }
-
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; background: #101a28; color: #ecf4ff; }
+    main { max-width: 760px; margin: 0 auto; padding: 44px 22px 64px; }
+    .eyebrow { color: #8ad8df; font-size: 14px; font-weight: 700; letter-spacing: .08em; }
     h1 { margin: 16px 0; }
-
-    p {
-      color: #bfd0e5;
-      line-height: 1.7;
-    }
-
-    section, li {
-      margin: 18px 0;
-      padding: 20px;
-      border: 1px solid #51667c;
-      border-radius: 14px;
-      background: #1a2a3d;
-    }
-
-    label {
-      display: block;
-      margin: 12px 0 6px;
-    }
-
-    input, textarea {
-      box-sizing: border-box;
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #60758c;
-      border-radius: 8px;
-      background: #101a28;
-      color: white;
-      font: inherit;
-    }
-
-    textarea {
-      min-height: 110px;
-      resize: vertical;
-    }
-
-    button {
-      margin: 12px 8px 0 0;
-      padding: 11px 17px;
-      border: 0;
-      border-radius: 8px;
-      background: #287c91;
-      color: white;
-      font: inherit;
-      cursor: pointer;
-    }
-
+    p { color: #bfd0e5; line-height: 1.7; }
+    section, li { margin: 18px 0; padding: 20px; border: 1px solid #51667c; border-radius: 14px; background: #1a2a3d; }
+    label { display: block; margin: 12px 0 6px; }
+    input, textarea { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #60758c; border-radius: 8px; background: #101a28; color: white; font: inherit; }
+    textarea { min-height: 110px; resize: vertical; }
+    button { margin: 12px 8px 0 0; padding: 11px 17px; border: 0; border-radius: 8px; background: #287c91; color: white; font: inherit; cursor: pointer; }
     button.secondary { background: #52647a; }
     button.danger { background: #a34255; }
-
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    li strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 18px;
-    }
-
-    li p {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
-    .message {
-      min-height: 24px;
-      color: #8ad8df;
-    }
-
-    #mfaQr {
-      display: block;
-      width: 220px;
-      max-width: 100%;
-      margin: 18px auto;
-      padding: 12px;
-      border-radius: 12px;
-      background: white;
-    }
-
-    #mfaSecret {
-      font-family: monospace;
-    }
-
+    ul { list-style: none; padding: 0; }
+    li strong { display: block; margin-bottom: 8px; font-size: 18px; }
+    li p { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .message { min-height: 24px; color: #8ad8df; }
+    #mfaQr { display: block; width: 220px; max-width: 100%; margin: 18px auto; padding: 12px; border-radius: 12px; background: white; }
+    #mfaSecret { font-family: monospace; }
     .hidden { display: none; }
   </style>
 </head>
-
 <body>
   <main>
     <div class="eyebrow">BYTE BACK · 3단계 인증 자료실</div>
     <h1>나의 비밀창고</h1>
     <p>로그인한 사용자만 자신의 가상 메모를 관리할 수 있습니다.</p>
 
+    <section id="appStatusSection" aria-labelledby="appStatusTitle">
+      <h2 id="appStatusTitle">앱 및 접속 상태</h2>
+      <p id="appInstallStatus" aria-live="polite">앱 설치 상태를 확인하고 있습니다.</p>
+      <button type="button" id="installButton" class="secondary" hidden>앱 설치하기</button>
+      <p id="deviceApprovalStatus" aria-live="polite">기기 승인 상태: 서버 확인 전</p>
+      <p>앱 설치 여부와 기기 승인은 별개입니다. 앱을 설치했더라도 서버가 기기 등록을 확인하기 전에는 승인된 기기로 간주하지 않습니다.</p>
+      <p id="connectionStatus" aria-live="polite">인터넷 연결 상태를 확인하고 있습니다.</p>
+      <p>이 자료실은 로그인과 서버 연결이 필요합니다. 오프라인 상태에서는 로그인 및 자료 조회가 제한됩니다.</p>
+    </section>
+
     <section id="authSection">
       <h2>로그인</h2>
-
       <form id="loginForm">
         <label for="email">이메일</label>
         <input id="email" type="email" autocomplete="email" required>
-
         <label for="password">비밀번호</label>
-        <input id="password" type="password"
-          autocomplete="current-password" required>
-
+        <input id="password" type="password" autocomplete="current-password" required>
         <button type="submit">로그인</button>
       </form>
-
       <p id="authMessage" class="message" aria-live="polite"></p>
     </section>
 
     <section id="mfaSection" class="hidden">
       <h2>2단계 인증</h2>
-      <p id="mfaMessage" class="message" aria-live="polite">
-        인증 수단을 확인하고 있습니다.
-      </p>
-
+      <p id="mfaMessage" class="message" aria-live="polite">인증 수단을 확인하고 있습니다.</p>
       <div id="mfaEnrollment" class="hidden">
         <h3>인증 앱 등록</h3>
         <p>Google Authenticator 등의 인증 앱으로 QR 코드를 스캔해 주세요.</p>
         <img id="mfaQr" class="hidden" alt="2단계 인증 등록 QR 코드">
-
         <label for="mfaSecret">수동 등록 키</label>
-        <input id="mfaSecret" type="password" readonly
-          autocomplete="off">
-
-        <button type="button" id="showSecretButton" class="secondary">
-          등록 키 보기
-        </button>
+        <input id="mfaSecret" type="password" readonly autocomplete="off">
+        <button type="button" id="showSecretButton" class="secondary">등록 키 보기</button>
       </div>
-
       <form id="mfaForm" class="hidden">
         <label for="mfaCode">인증 앱의 6자리 코드</label>
-        <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code"
-          pattern="[0-9]{6}" maxlength="6" required>
+        <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
         <button type="submit">인증 확인</button>
       </form>
-
-      <button type="button" id="enrollButton" class="hidden">
-        인증 앱 등록하기
-      </button>
-      <button type="button" id="mfaLogoutButton" class="secondary">
-        로그아웃
-      </button>
+      <button type="button" id="enrollButton" class="hidden">인증 앱 등록하기</button>
+      <button type="button" id="mfaLogoutButton" class="secondary">로그아웃</button>
     </section>
 
     <section id="notesSection" class="hidden">
       <p id="userInfo"></p>
       <button id="logoutButton" class="secondary">로그아웃</button>
-
       <h2>메모 작성</h2>
-
       <form id="noteForm">
         <label for="title">제목</label>
         <input id="title" maxlength="200" required>
-
         <label for="body">내용</label>
         <textarea id="body" required></textarea>
-
         <button type="submit" id="saveButton">메모 추가</button>
-        <button type="button" id="cancelButton" class="secondary hidden">
-          수정 취소
-        </button>
+        <button type="button" id="cancelButton" class="secondary hidden">수정 취소</button>
       </form>
-
       <p id="noteMessage" class="message" aria-live="polite"></p>
-
       <h2>내 메모 목록</h2>
       <ul id="notes" aria-live="polite"></ul>
     </section>
   </main>
 
   <script type="module">
-    import { createClient } from
-      'https://esm.sh/@supabase/supabase-js@2';
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-    const SUPABASE_URL =
-      'https://yggaxjcaqxswsplprkjo.supabase.co';
+    const SUPABASE_URL = 'https://yggaxjcaqxswsplprkjo.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_4qSdXMr8CYTku7hjVkvN0A_eRcGqwUt';
 
-    const SUPABASE_PUBLISHABLE_KEY =
-      'sb_publishable_4qSdXMr8CYTku7hjVkvN0A_eRcGqwUt';
-
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: false }
+    });
 
     const authSection = document.querySelector('#authSection');
     const notesSection = document.querySelector('#notesSection');
@@ -232,6 +119,7 @@
     const mfaForm = document.querySelector('#mfaForm');
     const mfaCode = document.querySelector('#mfaCode');
     const enrollButton = document.querySelector('#enrollButton');
+    const deviceApprovalStatus = document.querySelector('#deviceApprovalStatus');
 
     let currentUser = null;
     let editingId = null;
@@ -246,10 +134,7 @@
     async function apiRequest(path, options = {}) {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-
-      if (!token) {
-        throw new Error('로그인이 필요합니다.');
-      }
+      if (!token) throw new Error('로그인이 필요합니다.');
 
       const response = await fetch(path, {
         ...options,
@@ -257,18 +142,14 @@
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-          ...options.headers,
-        },
+          ...options.headers
+        }
       });
 
       const result = await response.json().catch(() => ({}));
-
       if (!response.ok) {
-        throw new Error(
-          result.error || `요청에 실패했습니다. (${response.status})`
-        );
+        throw new Error(result.error || `요청에 실패했습니다. (${response.status})`);
       }
-
       return result;
     }
 
@@ -281,13 +162,9 @@
 
     async function loadNotes() {
       notesList.replaceChildren();
-
       try {
         const data = await apiRequest('/api/notes');
-
-        if (!Array.isArray(data)) {
-          throw new Error('메모 목록 형식이 올바르지 않습니다.');
-        }
+        if (!Array.isArray(data)) throw new Error('메모 목록 형식이 올바르지 않습니다.');
 
         if (data.length === 0) {
           const item = document.createElement('li');
@@ -320,12 +197,8 @@
           deleteButton.className = 'danger';
           deleteButton.addEventListener('click', async () => {
             if (!confirm('이 메모를 삭제할까요?')) return;
-
             try {
-              await apiRequest(
-                `/api/notes/${encodeURIComponent(note.id)}`,
-                { method: 'DELETE' }
-              );
+              await apiRequest(`/api/notes/${encodeURIComponent(note.id)}`, { method: 'DELETE' });
               showMessage(noteMessage, '메모를 삭제했습니다.');
               await loadNotes();
             } catch (error) {
@@ -361,10 +234,7 @@
       currentChallengeId = null;
       showMessage(mfaMessage, '인증 코드를 준비하고 있습니다.');
 
-      const { data, error } = await supabase.auth.mfa.challenge({
-        factorId,
-      });
-
+      const { data, error } = await supabase.auth.mfa.challenge({ factorId });
       if (error) {
         showMessage(mfaMessage, `인증 준비 실패: ${error.message}`);
         return;
@@ -387,13 +257,16 @@
         clearMfaEnrollment();
         notesList.replaceChildren();
         resetForm();
+        deviceApprovalStatus.textContent = '기기 승인 상태: 로그인 전';
         return;
       }
 
       document.querySelector('#userInfo').textContent =
         `로그인 계정: ${currentUser.email ?? '사용자'}`;
+
       showMessage(authMessage, '');
       mfaSection.classList.remove('hidden');
+      deviceApprovalStatus.textContent = '기기 승인 상태: 서버 확인 전';
       showMessage(mfaMessage, '인증 단계를 확인하고 있습니다.');
 
       const { data: assurance, error: assuranceError } =
@@ -425,7 +298,7 @@
       }
 
       const verifiedFactor = factors.totp.find(
-        (factor) => factor.status === 'verified'
+        factor => factor.status === 'verified'
       );
 
       if (verifiedFactor) {
@@ -439,92 +312,67 @@
       enrollButton.classList.remove('hidden');
 
       const pendingFactor = factors.all.find(
-        (factor) =>
-          factor.factor_type === 'totp' &&
-          factor.status === 'unverified'
+        factor => factor.factor_type === 'totp' && factor.status === 'unverified'
       );
 
-      if (pendingFactor) {
-        showMessage(
-          mfaMessage,
-          '완료되지 않은 인증 앱 등록이 있습니다. 다시 등록해 주세요.'
-        );
-      } else {
-        showMessage(
-          mfaMessage,
-          '메모를 열기 전에 인증 앱을 등록해야 합니다.'
-        );
-      }
+      showMessage(
+        mfaMessage,
+        pendingFactor
+          ? '완료되지 않은 인증 앱 등록이 있습니다. 다시 등록해 주세요.'
+          : '메모를 열기 전에 인증 앱을 등록해야 합니다.'
+      );
     }
 
-    document.querySelector('#enrollButton').addEventListener(
-      'click',
-      async () => {
-        enrollButton.disabled = true;
-        showMessage(mfaMessage, '인증 앱을 등록하고 있습니다.');
+    enrollButton.addEventListener('click', async () => {
+      enrollButton.disabled = true;
+      showMessage(mfaMessage, '인증 앱을 등록하고 있습니다.');
 
-        try {
-          const { data: factors, error: listError } =
-            await supabase.auth.mfa.listFactors();
+      try {
+        const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+        if (listError) throw listError;
 
-          if (listError) throw listError;
+        const pendingFactors = factors.all.filter(
+          factor => factor.factor_type === 'totp' && factor.status === 'unverified'
+        );
 
-          const pendingFactors = factors.all.filter(
-            (factor) =>
-              factor.factor_type === 'totp' &&
-              factor.status === 'unverified'
-          );
-
-          for (const factor of pendingFactors) {
-            const { error } = await supabase.auth.mfa.unenroll({
-              factorId: factor.id,
-            });
-            if (error) throw error;
-          }
-
-          const { data, error } = await supabase.auth.mfa.enroll({
-            factorType: 'totp',
-            friendlyName: 'BYTE BACK 인증 앱',
-            issuer: 'BYTE BACK',
-          });
-
+        for (const factor of pendingFactors) {
+          const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
           if (error) throw error;
-
-          currentFactorId = data.id;
-          currentChallengeId = null;
-
-          mfaQr.src = `data:image/svg+xml;utf-8,${encodeURIComponent(data.totp.qr_code)}`;
-          mfaQr.classList.remove('hidden');
-          mfaSecret.value = data.totp.secret;
-          mfaEnrollment.classList.remove('hidden');
-          enrollButton.classList.add('hidden');
-
-          await startMfaChallenge(data.id);
-          showMessage(
-            mfaMessage,
-            'QR 코드를 인증 앱으로 스캔한 뒤 6자리 코드를 입력해 주세요.'
-          );
-        } catch (error) {
-          showMessage(mfaMessage, `인증 앱 등록 실패: ${error.message}`);
-        } finally {
-          enrollButton.disabled = false;
         }
-      }
-    );
 
-    document.querySelector('#showSecretButton').addEventListener(
-      'click',
-      () => {
-        const showing = mfaSecret.type === 'text';
-        mfaSecret.type = showing ? 'password' : 'text';
-        document.querySelector('#showSecretButton').textContent =
-          showing ? '등록 키 보기' : '등록 키 숨기기';
-      }
-    );
+        const { data, error } = await supabase.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: 'BYTE BACK 인증 앱',
+          issuer: 'BYTE BACK'
+        });
+        if (error) throw error;
 
-    mfaForm.addEventListener('submit', async (event) => {
+        currentFactorId = data.id;
+        currentChallengeId = null;
+        mfaQr.src = `data:image/svg+xml;utf-8,${encodeURIComponent(data.totp.qr_code)}`;
+        mfaQr.classList.remove('hidden');
+        mfaSecret.value = data.totp.secret;
+        mfaEnrollment.classList.remove('hidden');
+        enrollButton.classList.add('hidden');
+
+        await startMfaChallenge(data.id);
+        showMessage(mfaMessage, 'QR 코드를 인증 앱으로 스캔한 뒤 6자리 코드를 입력해 주세요.');
+      } catch (error) {
+        showMessage(mfaMessage, `인증 앱 등록 실패: ${error.message}`);
+      } finally {
+        enrollButton.disabled = false;
+      }
+    });
+
+    document.querySelector('#showSecretButton').addEventListener('click', () => {
+      const showing = mfaSecret.type === 'text';
+      mfaSecret.type = showing ? 'password' : 'text';
+      document.querySelector('#showSecretButton').textContent =
+        showing ? '등록 키 보기' : '등록 키 숨기기';
+    });
+
+    mfaForm.addEventListener('submit', async event => {
       event.preventDefault();
-
       const code = mfaCode.value.trim();
 
       if (!/^\d{6}$/.test(code)) {
@@ -545,9 +393,8 @@
         const { error } = await supabase.auth.mfa.verify({
           factorId: currentFactorId,
           challengeId: currentChallengeId,
-          code,
+          code
         });
-
         if (error) throw error;
 
         clearMfaEnrollment();
@@ -556,7 +403,6 @@
       } catch (error) {
         currentChallengeId = null;
         showMessage(mfaMessage, `인증 실패: ${error.message}`);
-
         try {
           await startMfaChallenge(currentFactorId);
         } catch {
@@ -568,83 +414,60 @@
       }
     });
 
-    document.querySelector('#mfaLogoutButton').addEventListener(
-      'click',
-      async () => {
-        const { error } = await supabase.auth.signOut();
-
-        if (error) {
-          showMessage(mfaMessage, `로그아웃 실패: ${error.message}`);
-          return;
-        }
-
-        await updateScreen(null);
-        showMessage(authMessage, '로그아웃했습니다.');
+    document.querySelector('#mfaLogoutButton').addEventListener('click', async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        showMessage(mfaMessage, `로그아웃 실패: ${error.message}`);
+        return;
       }
-    );
+      await updateScreen(null);
+      showMessage(authMessage, '로그아웃했습니다.');
+    });
 
-    document.querySelector('#loginForm').addEventListener(
-      'submit',
-      async (event) => {
-        event.preventDefault();
-        showMessage(authMessage, '로그인 중입니다.');
-
-        const email = document.querySelector('#email').value;
-        const password = document.querySelector('#password').value;
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          showMessage(authMessage, `로그인 실패: ${error.message}`);
-          return;
-        }
-
-        await updateScreen(data.session);
-      }
-    );
-
-    document.querySelector('#logoutButton').addEventListener(
-      'click',
-      async () => {
-        const { error } = await supabase.auth.signOut();
-
-        if (error) {
-          showMessage(noteMessage, `로그아웃 실패: ${error.message}`);
-          return;
-        }
-
-        showMessage(authMessage, '로그아웃했습니다.');
-        await updateScreen(null);
-      }
-    );
-
-    noteForm.addEventListener('submit', async (event) => {
+    document.querySelector('#loginForm').addEventListener('submit', async event => {
       event.preventDefault();
+      showMessage(authMessage, '로그인 중입니다.');
 
+      const email = document.querySelector('#email').value;
+      const password = document.querySelector('#password').value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        showMessage(authMessage, `로그인 실패: ${error.message}`);
+        return;
+      }
+      await updateScreen(data.session);
+    });
+
+    document.querySelector('#logoutButton').addEventListener('click', async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        showMessage(noteMessage, `로그아웃 실패: ${error.message}`);
+        return;
+      }
+      showMessage(authMessage, '로그아웃했습니다.');
+      await updateScreen(null);
+    });
+
+    noteForm.addEventListener('submit', async event => {
+      event.preventDefault();
       const title = document.querySelector('#title').value;
       const body = document.querySelector('#body').value;
 
       try {
         if (editingId) {
-          await apiRequest(
-            `/api/notes/${encodeURIComponent(editingId)}`,
-            {
-              method: 'PUT',
-              body: JSON.stringify({ title, body }),
-            }
-          );
+          await apiRequest(`/api/notes/${encodeURIComponent(editingId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ title, body })
+          });
           showMessage(noteMessage, '메모를 수정했습니다.');
         } else {
           await apiRequest('/api/notes', {
             method: 'POST',
-            body: JSON.stringify({ title, body }),
+            body: JSON.stringify({ title, body })
           });
           showMessage(noteMessage, '메모를 추가했습니다.');
         }
-
         resetForm();
         await loadNotes();
       } catch (error) {
@@ -652,10 +475,56 @@
       }
     });
 
-    document.querySelector('#cancelButton').addEventListener(
-      'click',
-      resetForm
-    );
+    document.querySelector('#cancelButton').addEventListener('click', resetForm);
+
+    // 앱 설치 상태는 기기 승인 증거로 사용하지 않습니다.
+    const installStatus = document.querySelector('#appInstallStatus');
+    const installButton = document.querySelector('#installButton');
+    const connectionStatus = document.querySelector('#connectionStatus');
+    let deferredInstallPrompt = null;
+
+    function updateInstallStatus() {
+      const installed =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+
+      installStatus.textContent = installed
+        ? '앱 설치 상태: 설치된 앱으로 실행 중'
+        : '앱 설치 상태: 브라우저에서 실행 중';
+    }
+
+    function updateConnectionStatus() {
+      connectionStatus.textContent = navigator.onLine
+        ? '접속 상태: 온라인 · 서버 연결이 필요합니다.'
+        : '접속 상태: 오프라인 · 로그인 및 자료 조회를 사용할 수 없습니다.';
+    }
+
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      installButton.hidden = false;
+    });
+
+    installButton.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installButton.hidden = true;
+      updateInstallStatus();
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      installButton.hidden = true;
+      updateInstallStatus();
+    });
+
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+
+    updateInstallStatus();
+    updateConnectionStatus();
 
     const { data: sessionData } = await supabase.auth.getSession();
     await updateScreen(sessionData.session);
