@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ko">
 <head>
@@ -138,6 +139,7 @@
 
       const response = await fetch(path, {
         ...options,
+        credentials: 'same-origin',
         cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
@@ -282,8 +284,49 @@
       if (assurance.currentLevel === 'aal2') {
         clearMfaEnrollment();
         mfaSection.classList.add('hidden');
-        notesSection.classList.remove('hidden');
-        await loadNotes();
+
+        notesSection.classList.add('hidden');
+        notesList.replaceChildren();
+        resetForm();
+
+        deviceApprovalStatus.textContent =
+          '기기 승인 상태: 서버에 확인하고 있습니다.';
+
+        try {
+          const approval = await apiRequest('/api/device-approval');
+
+          if (version !== screenUpdateVersion) return;
+
+          if (approval.approved !== true) {
+            notesSection.classList.add('hidden');
+            notesList.replaceChildren();
+
+            deviceApprovalStatus.textContent =
+              `기기 승인 대기 중 · 사용자 ID: ${approval.userId} · 기기 ID: ${approval.deviceId}`;
+
+            return;
+          }
+
+          deviceApprovalStatus.textContent =
+            '기기 승인 상태: 서버 승인 완료';
+
+          notesSection.classList.remove('hidden');
+          await loadNotes();
+
+          if (version !== screenUpdateVersion) {
+            notesSection.classList.add('hidden');
+            notesList.replaceChildren();
+          }
+        } catch (error) {
+          if (version !== screenUpdateVersion) return;
+
+          notesSection.classList.add('hidden');
+          notesList.replaceChildren();
+
+          deviceApprovalStatus.textContent =
+            `기기 승인 확인 실패: ${error.message}`;
+        }
+
         return;
       }
 

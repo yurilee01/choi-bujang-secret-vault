@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { createLoginVerifier } from '../src/verify-login.mjs';
+import { readDeviceCookie } from '../src/device-approval.mjs';
 
 const config = JSON.parse(
   readFileSync(new URL('../aleph.config.json', import.meta.url), 'utf8')
@@ -229,6 +230,41 @@ export function createNotesHandler({
           owner_id: verified.owner_id,
           contentSha256: contentHash(verified),
           restored: true,
+        });
+      }
+
+      // 일반 메모 API는 서버에서 승인된 기기만 사용할 수 있다.
+      const deviceCookieSecret = process.env.DEVICE_COOKIE_SECRET;
+
+      if (!deviceCookieSecret || deviceCookieSecret.length < 32) {
+        return response.status(500).json({
+          error: 'DEVICE_APPROVAL_CONFIGURATION_ERROR',
+        });
+      }
+
+      const deviceId = readDeviceCookie(request, deviceCookieSecret);
+
+      if (!deviceId) {
+        return response.status(403).json({
+          error: 'DEVICE_NOT_APPROVED',
+        });
+      }
+
+      const { data: deviceApproval, error: approvalError } = await supabase
+        .from('device_approvals')
+        .select('approved,approved_at')
+        .eq('user_id', verifiedUser.userId)
+        .eq('device_id', deviceId)
+        .maybeSingle();
+
+      if (approvalError) throw approvalError;
+
+      if (
+        deviceApproval?.approved !== true
+        || typeof deviceApproval.approved_at !== 'string'
+      ) {
+        return response.status(403).json({
+          error: 'DEVICE_NOT_APPROVED',
         });
       }
 

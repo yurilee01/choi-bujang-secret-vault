@@ -2,9 +2,11 @@
 import assert from 'node:assert/strict';
 import { test, after } from 'node:test';
 import { createNotesHandler } from '../api/notes.js';
+import { createDeviceCookie } from '../src/device-approval.mjs';
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
+const DEVICE_SECRET = 'test-device-cookie-secret-12345678901234567890';
 
 const A_NOTE = {
   id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -49,14 +51,21 @@ function mockResponse() {
 
 function createMockDatabase(initialNotes = [A_NOTE, B_NOTE]) {
   const notes = structuredClone(initialNotes);
+  const approvals = [];
 
   return {
     notes,
+    approvals,
 
     client() {
       return {
         from(table) {
-          assert.equal(table, 'notes');
+          assert.ok(
+            table === 'notes' || table === 'device_approvals',
+            `지원하지 않는 테이블: ${table}`
+          );
+
+          const rows = table === 'notes' ? notes : approvals;
 
           let action = 'select';
           let filters = {};
@@ -119,14 +128,14 @@ function createMockDatabase(initialNotes = [A_NOTE, B_NOTE]) {
             },
           };
 
-          function project(rows) {
-            if (!selectedColumns) return rows;
+          function project(items) {
+            if (!selectedColumns) return items;
 
-            return rows.map((note) =>
+            return items.map((item) =>
               Object.fromEntries(
                 selectedColumns.map((column) => [
                   column,
-                  note[column],
+                  item[column],
                 ])
               )
             );
@@ -134,29 +143,37 @@ function createMockDatabase(initialNotes = [A_NOTE, B_NOTE]) {
 
           async function execute() {
             if (action === 'insert') {
-              const note = {
-                ...updateValues,
-                id: updateValues.id ??
-                  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-              };
+              const values = Array.isArray(updateValues)
+                ? updateValues
+                : [updateValues];
 
-              notes.push(note);
+              const inserted = values.map((value) => ({
+                ...value,
+                ...(table === 'notes'
+                  ? {
+                      id: value.id ??
+                        'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+                    }
+                  : {}),
+              }));
+
+              rows.push(...inserted);
 
               return {
-                data: project([note]),
+                data: project(inserted),
                 error: null,
               };
             }
 
-            const matches = notes.filter((note) =>
+            const matches = rows.filter((item) =>
               Object.entries(filters).every(
-                ([column, value]) => note[column] === value
+                ([column, value]) => item[column] === value
               )
             );
 
             if (action === 'update') {
-              for (const note of matches) {
-                Object.assign(note, updateValues);
+              for (const item of matches) {
+                Object.assign(item, updateValues);
               }
 
               return {
@@ -166,8 +183,8 @@ function createMockDatabase(initialNotes = [A_NOTE, B_NOTE]) {
             }
 
             if (action === 'delete') {
-              for (const note of matches) {
-                notes.splice(notes.indexOf(note), 1);
+              for (const item of matches) {
+                rows.splice(rows.indexOf(item), 1);
               }
 
               return {
@@ -190,7 +207,17 @@ function createMockDatabase(initialNotes = [A_NOTE, B_NOTE]) {
 }
 
 function makeHandler(userId, database) {
-  return createNotesHandler({
+  const device = createDeviceCookie(DEVICE_SECRET);
+  const deviceId = device.deviceId;
+
+  database.approvals.push({
+    user_id: userId,
+    device_id: deviceId,
+    approved: true,
+    approved_at: new Date().toISOString(),
+  });
+
+  const handler = createNotesHandler({
     verifyLogin: async (authorization) => {
       if (authorization === 'Bearer test-token') {
         return { userId };
@@ -201,14 +228,22 @@ function makeHandler(userId, database) {
 
     createSupabaseClient: () => database.client(),
   });
+
+  handler.testCookie = device.cookie.split(';')[0];
+
+  return handler;
 }
 
 async function call(handler, request) {
   const response = mockResponse();
 
   await handler({
-    headers: { authorization: 'Bearer test-token' },
     ...request,
+    headers: {
+      authorization: 'Bearer test-token',
+      cookie: handler.testCookie,
+      ...request.headers,
+    },
   }, response);
 
   return response;
@@ -216,9 +251,11 @@ async function call(handler, request) {
 
 const originalUrl = process.env.SUPABASE_URL;
 const originalKey = process.env.SUPABASE_SECRET_KEY;
+const originalDeviceSecret = process.env.DEVICE_COOKIE_SECRET;
 
 process.env.SUPABASE_URL = 'https://example.supabase.co';
 process.env.SUPABASE_SECRET_KEY = 'test-secret-key';
+process.env.DEVICE_COOKIE_SECRET = DEVICE_SECRET;
 
 test('인증 헤더가 없으면 401 JSON으로 거절한다', async () => {
   const handler = createNotesHandler();
@@ -409,10 +446,48 @@ test('B가 추가한 메모에는 B의 사용자 ID가 저장된다', async () =
   assert.equal(database.notes[0].owner_id, B);
 });
 
+test('승인 쿠키가 없으면 메모 조회를 거절한다', async () => {
+  const database = createMockDatabase();
+  const handler = makeHandler(A, database);
+
+  const response = await call(handler, {
+    method: 'GET',
+    headers: { cookie: '' },
+  });
+
+  assert.equal(response.statusCode, 403);
+  assert.deepEqual(response.body, {
+    error: 'DEVICE_NOT_APPROVED',
+  });
+});
+
+test('서명이 변조된 기기 쿠키는 메모 조회를 거절한다', async () => {
+  const database = createMockDatabase();
+  const handler = makeHandler(A, database);
+
+  const response = await call(handler, {
+    method: 'GET',
+    headers: {
+      cookie: 'byte_back_device=11111111-1111-4111-8111-111111111111.invalid',
+    },
+  });
+
+  assert.equal(response.statusCode, 403);
+  assert.deepEqual(response.body, {
+    error: 'DEVICE_NOT_APPROVED',
+  });
+});
+
 after(() => {
   if (originalUrl === undefined) delete process.env.SUPABASE_URL;
   else process.env.SUPABASE_URL = originalUrl;
 
   if (originalKey === undefined) delete process.env.SUPABASE_SECRET_KEY;
   else process.env.SUPABASE_SECRET_KEY = originalKey;
+
+  if (originalDeviceSecret === undefined) {
+    delete process.env.DEVICE_COOKIE_SECRET;
+  } else {
+    process.env.DEVICE_COOKIE_SECRET = originalDeviceSecret;
+  }
 });
