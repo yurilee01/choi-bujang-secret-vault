@@ -69,7 +69,7 @@
         <input id="mfaSecret" type="password" readonly autocomplete="off">
         <button type="button" id="showSecretButton" class="secondary">등록 키 보기</button>
       </div>
-      <form id="mfaForm" class="hidden">
+      <form id="mfaForm" class="hidden" novalidate>
         <label for="mfaCode">인증 앱의 6자리 코드</label>
         <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
         <button type="submit">인증 확인</button>
@@ -416,6 +416,7 @@
 
     mfaForm.addEventListener('submit', async event => {
       event.preventDefault();
+
       const code = mfaCode.value.trim();
 
       if (!/^\d{6}$/.test(code)) {
@@ -438,19 +439,17 @@
           challengeId: currentChallengeId,
           code
         });
+
         if (error) throw error;
 
         clearMfaEnrollment();
+
         const { data } = await supabase.auth.getSession();
         await updateScreen(data.session);
+
       } catch (error) {
-        currentChallengeId = null;
         showMessage(mfaMessage, `인증 실패: ${error.message}`);
-        try {
-          await startMfaChallenge(currentFactorId);
-        } catch {
-          showMessage(mfaMessage, '인증 코드를 다시 준비하지 못했습니다. 다시 로그인해 주세요.');
-        }
+
       } finally {
         verifyButton.disabled = false;
         mfaCode.value = '';
