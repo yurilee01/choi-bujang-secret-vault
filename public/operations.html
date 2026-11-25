@@ -1,0 +1,463 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a28">
+  <title>BYTE BACK | 탈환 작전실</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      background: #101a28;
+      color: #ecf4ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body { margin: 0; }
+
+    main {
+      max-width: 1000px;
+      margin: auto;
+      padding: 32px 20px 60px;
+    }
+
+    .eyebrow {
+      color: #8ad8df;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    h1 { margin-bottom: 8px; }
+
+    h2 {
+      margin-top: 0;
+      font-size: 21px;
+    }
+
+    p {
+      color: #bfd0e5;
+      line-height: 1.65;
+    }
+
+    section {
+      margin: 20px 0;
+      padding: 22px;
+      border: 1px solid #51667c;
+      border-radius: 14px;
+      background: #1a2a3d;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .tile {
+      padding: 16px;
+      border: 1px solid #51667c;
+      border-radius: 10px;
+      background: #101a28;
+    }
+
+    .tile strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .status {
+      color: #8ad8df;
+      font-weight: 700;
+    }
+
+    .warning {
+      color: #f2c879;
+    }
+
+    .muted {
+      color: #9eb1c8;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 11px 9px;
+      border-bottom: 1px solid #51667c;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    th { color: #8ad8df; }
+
+    .table-wrap { overflow-x: auto; }
+
+    code {
+      color: #a8e5e9;
+      overflow-wrap: anywhere;
+    }
+
+    .command-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .command-item {
+      padding: 12px;
+      border: 1px solid #51667c;
+      border-radius: 8px;
+      background: #0b1420;
+    }
+
+    .command-item strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #8ad8df;
+    }
+
+    pre.command {
+      display: block;
+      margin: 0;
+      padding: 10px;
+      border-radius: 6px;
+      background: #101a28;
+      color: #a8e5e9;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+
+    a, button {
+      display: inline-block;
+      margin: 8px 8px 0 0;
+      padding: 10px 15px;
+      border: 0;
+      border-radius: 8px;
+      background: #287c91;
+      color: white;
+      text-decoration: none;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    a.secondary { background: #52647a; }
+
+    footer {
+      color: #9eb1c8;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      main { padding: 22px 14px 40px; }
+      section { padding: 16px; }
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <div class="eyebrow">BYTE BACK · STAGE 12</div>
+
+  <h1>탈환 작전실</h1>
+
+  <p>
+    판정 · 탐지 · 대응 · 복구 현황을 확인하는
+    보안 운영 대시보드입니다.
+  </p>
+
+  <section>
+    <h2>작전 현황</h2>
+
+    <div class="grid">
+      <div class="tile">
+        <strong>판정 규칙</strong>
+        <span class="status">5개 등록 코드 확인</span>
+      </div>
+
+      <div class="tile">
+        <strong>XDR 모의 경보</strong>
+        <span class="status">5개 유형 결과 확인</span>
+      </div>
+
+      <div class="tile">
+        <strong>운영망 회수 집행</strong>
+        <span class="warning">확인되지 않음</span>
+      </div>
+
+      <div class="tile">
+        <strong>복구 백업 버전</strong>
+        <span class="status">note-backup-v1</span>
+      </div>
+    </div>
+
+    <p class="muted">
+      표시된 상태는 저장소의 코드·문서·로컬 기록을 기준으로 합니다.
+      실시간 운영 서버 상태를 조회한 결과가 아닙니다.
+    </p>
+  </section>
+
+  <section>
+    <h2>1. 판정기 규칙</h2>
+    <p>파일: <code>src/decider.mjs</code></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>규칙 ID</th>
+            <th>목적</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>device_registered</code></td>
+            <td>등록되지 않은 기기 거부</td>
+          </tr>
+          <tr>
+            <td><code>step_up_required</code></td>
+            <td>추가 본인 확인 요구</td>
+          </tr>
+          <tr>
+            <td><code>note_resource_access</code></td>
+            <td>허용된 메모 경로 확인</td>
+          </tr>
+          <tr>
+            <td><code>instructor_material_denied</code></td>
+            <td>강사 자료 접근 거부</td>
+          </tr>
+          <tr>
+            <td><code>unknown_resource_denied</code></td>
+            <td>알 수 없는 자원 접근 거부</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">
+      판정 응답은 schema, requestId, decision, reasonCode,
+      ruleIds의 5개 항목을 사용합니다.
+    </p>
+  </section>
+
+  <section>
+    <h2>2. 탐지 및 대응 기록</h2>
+    <p>파일: <code>xdr/alerts.log</code></p>
+
+    <div class="grid">
+      <div class="tile">
+        <strong>Web Injection</strong>
+        26건 중 7건 차단
+      </div>
+      <div class="tile">
+        <strong>Known CVE</strong>
+        24건 중 8건 차단
+      </div>
+      <div class="tile">
+        <strong>Persistence</strong>
+        24건 중 8건 차단
+      </div>
+      <div class="tile">
+        <strong>Privilege</strong>
+        26건 중 5건 차단
+      </div>
+      <div class="tile">
+        <strong>Exfiltration</strong>
+        30건 중 7건 차단
+      </div>
+      <div class="tile">
+        <strong>Brute Force</strong>
+        결과 확인 자료 없음
+      </div>
+    </div>
+
+    <p>
+      탐지 연습 기준: 동일 주체의 10분 내 GET 요청이
+      120건을 초과하면 회수 제안을 생성합니다.
+    </p>
+
+    <p class="warning">
+      위 차단 건수는 저장소에 기록된 로컬 모의 탐지 결과입니다.
+      실제 네트워크 장비나 운영 서버에서 차단한 건수가 아닙니다.
+    </p>
+
+    <p class="muted">
+      회수 제안과 실제 계정·토큰 폐기는 별개의 작업입니다.
+      운영 회수 집행은 확인되지 않았습니다.
+    </p>
+  </section>
+
+  <section>
+    <h2>3. 복구 현황</h2>
+
+    <div class="grid">
+      <div class="tile">
+        <strong>백업 형식</strong>
+        <code>note-backup-v1</code>
+      </div>
+      <div class="tile">
+        <strong>복구 매니페스트</strong>
+        <code>note-restore-manifest-v1</code>
+      </div>
+      <div class="tile">
+        <strong>매니페스트 파일</strong>
+        <code>restore-manifest.json</code>
+      </div>
+      <div class="tile">
+        <strong>검증 방식</strong>
+        SHA-256 내용 해시 대조
+      </div>
+    </div>
+
+    <p>
+      복구 절차는 백업 버전·소유자·메모 ID·내용 해시를 확인하고,
+      기존 메모 및 감사 기록의 보존 여부를 검증합니다.
+    </p>
+
+    <p class="warning">
+      현재 확인한 복구 스크립트는 로컬 가짜 DB를 사용하는 연습 코드입니다.
+      실제 운영 DB 복구 완료 상태는 아닙니다.
+    </p>
+  </section>
+
+  <section>
+    <h2>4. 1~11단계 증거 현황</h2>
+
+    <p>
+      단계별 심사관의 실제 허용·거부 결과와 요청 ID·심사 시각을
+      확인할 자료가 아직 정리되지 않았습니다.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>단계</th>
+            <th>실제 심사 결과</th>
+            <th>요청 ID</th>
+            <th>심사 시각</th>
+            <th>증거 상태</th>
+          </tr>
+        </thead>
+        <tbody id="stageRows"></tbody>
+      </table>
+    </div>
+
+    <p class="warning">
+      미확인은 실패나 성공을 의미하지 않습니다.
+      실제 심사 증거를 확인하기 전에는 통과로 표시하지 않습니다.
+    </p>
+  </section>
+
+  <section>
+    <h2>5. 로컬 검증 및 복구 명령</h2>
+
+    <div class="tile">
+      <p><strong>판정기 테스트</strong></p>
+      <pre class="command">npm run decider:test</pre>
+
+      <p><strong>탐지기 테스트</strong></p>
+      <pre class="command">npm run detect:test</pre>
+
+      <p><strong>XDR 모의 탐지</strong></p>
+      <pre class="command">npm run xdr:run -- web-injection</pre>
+
+      <p><strong>복구 연습 순서</strong></p>
+
+      <div class="command-list">
+        <div class="command-item">
+          <strong>1. 초기 자료 생성</strong>
+          <pre class="command">node scripts/note-restore.mjs --init</pre>
+        </div>
+
+        <div class="command-item">
+          <strong>2. 백업 생성</strong>
+          <pre class="command">node scripts/note-restore.mjs --backup</pre>
+        </div>
+
+        <div class="command-item">
+          <strong>3. 손실 상황 모의</strong>
+          <pre class="command">node scripts/note-restore.mjs --simulate-loss</pre>
+        </div>
+
+        <div class="command-item">
+          <strong>4. 백업에서 복원</strong>
+          <pre class="command">node scripts/note-restore.mjs --restore</pre>
+        </div>
+      </div>
+    </div>
+
+    <p class="warning">
+      복구 명령은 위 순서대로 실행하는 로컬 연습입니다.
+      실제 운영 DB 복구 명령이 아닙니다.
+    </p>
+
+    <p class="muted">
+      XDR 명령의 web-injection은 실행 모듈 예시입니다.
+      brute-force, known-cve, persistence, privilege, exfiltration도
+      각각 실행할 수 있습니다.
+    </p>
+  </section>
+
+  <section>
+    <h2>6. 프로젝트로 돌아가기</h2>
+
+    <p>
+      기존 로그인 및 메모 기능은 기존 홈페이지에 유지됩니다.
+    </p>
+
+    <a href="/" class="secondary">비밀창고로 돌아가기</a>
+
+    <button type="button" id="refreshButton">
+      화면 새로고침
+    </button>
+  </section>
+
+  <footer>
+    BYTE BACK · 탈환 작전실 · 저장소 기반 현황판
+  </footer>
+</main>
+
+<script>
+  const stageRows = document.querySelector('#stageRows');
+
+  for (let stage = 1; stage <= 11; stage += 1) {
+    const row = document.createElement('tr');
+
+    const stageCell = document.createElement('td');
+    const resultCell = document.createElement('td');
+    const requestCell = document.createElement('td');
+    const timeCell = document.createElement('td');
+    const evidenceCell = document.createElement('td');
+
+    stageCell.textContent = `${stage}단계`;
+    resultCell.textContent = '확인 자료 없음';
+    requestCell.textContent = '미확인';
+    timeCell.textContent = '미확인';
+    evidenceCell.textContent = '미확인';
+
+    row.append(
+      stageCell,
+      resultCell,
+      requestCell,
+      timeCell,
+      evidenceCell
+    );
+
+    stageRows.append(row);
+  }
+
+  document
+    .querySelector('#refreshButton')
+    .addEventListener('click', () => {
+      window.location.reload();
+    });
+</script>
+</body>
+</html>

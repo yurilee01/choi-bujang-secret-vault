@@ -28,6 +28,21 @@
     #mfaQr { display: block; width: 220px; max-width: 100%; margin: 18px auto; padding: 12px; border-radius: 12px; background: white; }
     #mfaSecret { font-family: monospace; }
     .hidden { display: none; }
+
+    .dashboard-link {
+      display: inline-block;
+      margin: 12px 0 4px;
+      padding: 11px 17px;
+      border-radius: 8px;
+      background: #287c91;
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .dashboard-link:hover {
+      background: #3495aa;
+    }
   </style>
 </head>
 <body>
@@ -35,6 +50,10 @@
     <div class="eyebrow">BYTE BACK · 3단계 인증 자료실</div>
     <h1>나의 비밀창고</h1>
     <p>로그인한 사용자만 자신의 가상 메모를 관리할 수 있습니다.</p>
+
+    <a class="dashboard-link" href="/operations.html">
+      탈환 작전실 열기 →
+    </a>
 
     <section id="appStatusSection" aria-labelledby="appStatusTitle">
       <h2 id="appStatusTitle">앱 및 접속 상태</h2>
