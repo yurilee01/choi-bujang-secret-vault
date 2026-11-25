@@ -572,8 +572,11 @@
     const { data: sessionData } = await supabase.auth.getSession();
     await updateScreen(sessionData.session);
 
+    // 인증 상태 변경 콜백 안에서 Supabase 비동기 함수를 직접 실행하지 않습니다.
     supabase.auth.onAuthStateChange((_event, session) => {
-      void updateScreen(session);
+      setTimeout(() => {
+        void updateScreen(session);
+      }, 0);
     });
   </script>
 </body>
