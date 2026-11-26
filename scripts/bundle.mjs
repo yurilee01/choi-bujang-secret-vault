@@ -9,15 +9,56 @@ import { runAttackChecks } from '../src/attack-check.mjs';
 const currentFile = fileURLToPath(import.meta.url);
 const root = dirname(dirname(currentFile));
 
-const git = (...args) => execFileSync(
+const gitStatus = () => execFileSync(
   'git',
-  ['-C', root, ...args],
-  {
-    encoding: 'utf8',
-  }
+  ['-C', root, 'status', '--porcelain', '--untracked-files=all'],
+  { encoding: 'utf8' }
 ).trim();
 
-const fromCommit = (path) => JSON.parse(git('show', `HEAD:${path}`));
+const gitHead = () => execFileSync(
+  'git',
+  ['-C', root, 'rev-parse', '--verify', 'HEAD'],
+  { encoding: 'utf8' }
+).trim();
+
+const gitOriginConfig = () => execFileSync(
+  'git',
+  ['-C', root, 'config', '--local', '--no-includes', '--get', 'remote.origin.url'],
+  { encoding: 'utf8' }
+).trim();
+
+const gitOriginEffective = () => execFileSync(
+  'git',
+  ['-C', root, 'remote', 'get-url', 'origin'],
+  { encoding: 'utf8' }
+).trim();
+
+const gitChangedFiles = (commit) => execFileSync(
+  'git',
+  [
+    '-C', root,
+    'diff-tree',
+    '--root',
+    '--no-commit-id',
+    '--name-only',
+    '--no-renames',
+    '-r',
+    commit,
+  ],
+  { encoding: 'utf8' }
+).trim();
+
+const gitConfigFile = () => execFileSync(
+  'git',
+  ['-C', root, 'show', 'HEAD:aleph.config.json'],
+  { encoding: 'utf8' }
+).trim();
+
+const gitCommitSubject = (commit) => execFileSync(
+  'git',
+  ['-C', root, 'log', '-1', '--format=%s', commit],
+  { encoding: 'utf8' }
+).trim();
 
 const fail = (message) => {
   throw new Error(message);
@@ -54,26 +95,19 @@ const normalizedRepo = (value) => {
 };
 
 try {
-  const dirty = git('status', '--porcelain', '--untracked-files=all');
+  const dirty = gitStatus();
 
   if (dirty) {
     fail(`커밋되지 않은 파일이 있습니다. 먼저 확인해 주세요:\n${dirty}`);
   }
 
-  const commit = git('rev-parse', '--verify', 'HEAD');
+  const commit = gitHead();
 
   let repoUrl;
 
   try {
-    const raw = git(
-      'config',
-      '--local',
-      '--no-includes',
-      '--get',
-      'remote.origin.url'
-    );
-
-    const effective = git('remote', 'get-url', 'origin');
+    const raw = gitOriginConfig();
+    const effective = gitOriginEffective();
 
     repoUrl = normalizedRepo(raw);
 
@@ -91,15 +125,7 @@ try {
     fail('GitHub HTTPS 저장소 주소를 origin으로 등록해 주세요.');
   }
 
-  const changedFiles = git(
-    'diff-tree',
-    '--root',
-    '--no-commit-id',
-    '--name-only',
-    '--no-renames',
-    '-r',
-    commit
-  )
+  const changedFiles = gitChangedFiles(commit)
     .split(/\r?\n/u)
     .filter(Boolean)
     .sort();
@@ -108,7 +134,7 @@ try {
     fail('마지막 커밋에 바뀐 파일이 없습니다.');
   }
 
-  const config = fromCommit('aleph.config.json');
+  const config = JSON.parse(gitConfigFile());
 
   if (normalizedRepo(config.repoUrl) !== repoUrl) {
     fail('aleph.config.json의 repoUrl이 Git origin 주소와 다릅니다. 같은 저장소 주소로 맞춰 주세요.');
@@ -172,7 +198,7 @@ try {
     fail('src/decider.mjs의 RULE_IDS 이름과 중복을 확인해 주세요.');
   }
 
-  const commitSubject = git('log', '-1', '--format=%s', commit);
+  const commitSubject = gitCommitSubject(commit);
   const explanation =
     `커밋 "${commitSubject}"에서 변경한 파일 ${changedFiles.length}개를 제출합니다.`;
 
