@@ -60,7 +60,6 @@ export async function runAttackChecks(config) {
     method: 'GET',
     headers: { Accept: 'application/json' },
     redirect: 'error',
-    signal: AbortSignal.timeout(10000),
   });
 
   let jsonError = false;
@@ -124,7 +123,6 @@ export async function runAttackChecks(config) {
         apikey: publishableKey,
       },
       redirect: 'error',
-      signal: AbortSignal.timeout(10000),
     });
 
     let originalJsonError = false;
