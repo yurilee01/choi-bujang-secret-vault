@@ -1,4 +1,3 @@
-
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -24,12 +23,6 @@ const gitHead = () => execFileSync(
 const gitOriginConfig = () => execFileSync(
   'git',
   ['-C', root, 'config', '--local', '--no-includes', '--get', 'remote.origin.url'],
-  { encoding: 'utf8' }
-).trim();
-
-const gitOriginEffective = () => execFileSync(
-  'git',
-  ['-C', root, 'remote', 'get-url', 'origin'],
   { encoding: 'utf8' }
 ).trim();
 
@@ -107,18 +100,10 @@ try {
 
   try {
     const raw = gitOriginConfig();
-    const effective = gitOriginEffective();
 
     repoUrl = normalizedRepo(raw);
-
-    if (normalizedRepo(effective) !== repoUrl) {
-      fail('origin 주소가 Git 설정에서 바뀌었습니다. 저장소 설정을 확인해 주세요.');
-    }
   } catch (error) {
-    if (
-      error.message?.startsWith('origin 주소가') ||
-      error.message?.startsWith('GitHub HTTPS')
-    ) {
+    if (error.message?.startsWith('GitHub HTTPS')) {
       throw error;
     }
 
