@@ -14,9 +14,6 @@ const git = (...args) => execFileSync(
   ['-C', root, ...args],
   {
     encoding: 'utf8',
-    timeout: 5000,
-    maxBuffer: 512 * 1024,
-    windowsHide: true,
   }
 ).trim();
 
