@@ -74,7 +74,7 @@ const normalizedRepo = (value) => {
   const match =
     typeof value === 'string' &&
     value.length <= 250 &&
-    repository.exec(value);
+    value.match(repository);
 
   if (!match) {
     fail('GitHub HTTPS 저장소 주소를 origin으로 등록해 주세요.');
