@@ -10,12 +10,36 @@
 - GitHub: https://github.com/yurilee01/choi-bujang-secret-vault
 - 배포 주소: https://choi-bujang-secret-vault-umber-beta.vercel.app
 - 현재 작업 단계: 12단계 탈환 작전실
+- 검사한 커밋: `187527704b83f71c4975ad44b81806402e999341`
 - 기술: Node.js, Vercel, Supabase Auth, Supabase Database
 - 프런트엔드: `public/index.html`
 - 운영 대시보드: `public/operations.html`
 - 접근 판정기: `src/decider.mjs`
 - 이상 접속 탐지기: `src/detect.mjs`
 - 메모 API: `api/notes.js`
+
+## 구성 요소의 출처와 역할
+
+### 제공된 구성 요소
+
+- **ALEPH SDP 엔진**은 교육 환경에서 제공된 운영 측 구성 요소입니다.
+- 이 저장소의 학생 구현 코드와 ALEPH SDP 엔진 자체를 동일한 것으로 취급하지 않습니다.
+- 실제 운영 엔진의 접속 회수·정책 적용·심사 결과는 해당 운영 환경에서 확인해야 합니다.
+
+### 이 저장소에서 직접 구현한 구성 요소
+
+| 구성 요소 | 파일 | 역할 |
+|---|---|---|
+| 접속 앱 | `public/index.html` | 로그인, 인증, 메모 화면 |
+| 메모 API | `api/notes.js` | 인증 확인 및 메모 소유권 처리 |
+| 기기 승인 API | `api/device-approval.js` | 기기 승인 상태 확인 |
+| 접근 판정 규칙 | `src/decider.mjs` | 문서화된 요청값을 이용한 접근 판정 |
+| 이상 접속 탐지 규칙 | `src/detect.mjs` | 가상 사건의 대량 조회 탐지 |
+| 복구 연습 | `scripts/note-restore.mjs` | 로컬 가짜 DB를 이용한 백업·복구 |
+| XDR 모의 자료 | `xdr/` | 로컬 공격 유형별 모의 탐지 자료 |
+| 운영 대시보드 | `public/operations.html` | 저장소에 기록된 규칙과 실습 현황 표시 |
+
+학생이 직접 구현한 판정기와 탐지기는 교육용 코드입니다. 이 코드가 ALEPH SDP 엔진의 운영 정책을 직접 변경하거나 실제 계정·토큰을 폐기한다고 의미하지 않습니다.
 
 ## 12단계 작업 현황
 
@@ -171,16 +195,15 @@ npm run xdr:run -- exfiltration
 
 위 수치는 저장소에 기록된 로컬 모의 탐지 결과입니다. 실제 네트워크 장비나 운영 서버에서 차단한 건수가 아닙니다.
 
-## 심사 증거 기록 원칙
+## 심사 증거 및 실행 상태 기록 원칙
 
 1~11단계의 실제 심사 결과, 요청 ID, 심사 시각은 확인 가능한 증거를 기준으로 기록합니다.
 
-현재 대시보드에서 증거가 확인되지 않은 항목은 `미확인`으로 표시합니다.
-
-- 미확인은 성공을 의미하지 않습니다.
-- 미확인은 실패를 의미하지 않습니다.
-- 실제 심사 응답을 확인하기 전에는 통과로 기록하지 않습니다.
+- 확인된 실제 응답만 실제 실행 결과로 기록합니다.
+- 실행하지 않은 검사는 `not_run` 또는 미실행으로 구분합니다.
+- 미확인은 성공이나 실패를 의미하지 않습니다.
 - 로컬 테스트 결과를 실제 심사 결과로 바꾸어 기록하지 않습니다.
+- 가상 요청 수나 대시보드 표시 숫자를 실제 운영 검사 건수로 표현하지 않습니다.
 
 ## 로컬 설치 및 실행
 
@@ -206,6 +229,24 @@ npm run build -- --local
 ```
 
 로컬 빌드는 화면 및 정적 결과물 확인용입니다. Vercel 배포나 심판 접수를 증명하지 않습니다.
+
+### 4. 로컬 앱 실행
+
+Vercel CLI가 준비된 환경에서는 다음 명령으로 로컬 개발 서버를 실행할 수 있습니다.
+
+```bash
+npx vercel dev
+```
+
+터미널에 표시된 로컬 주소로 접속합니다. 실행 환경의 Vercel CLI 설치 및 인증 설정이 필요할 수 있습니다.
+
+### 5. 실행 중지
+
+로컬 개발 서버가 실행 중인 터미널에서 다음 키를 누릅니다.
+
+```text
+Ctrl + C
+```
 
 ## 주요 로컬 검사 명령
 
@@ -251,6 +292,31 @@ npm run test:r5
 npm run build -- --local
 ```
 
+위 명령은 각각 실행한 결과를 기준으로 기록합니다. 실행하지 않은 검사는 통과로 표시하지 않습니다.
+
+## 제출 묶음 생성
+
+제출 묶음 생성 명령:
+
+```bash
+npm run bundle
+```
+
+이 명령은 다음 항목을 확인하고 `artifacts/submission.json`을 생성합니다.
+
+- Git 작업 트리의 변경 여부
+- Git origin과 설정 파일의 저장소 주소
+- 현재 커밋 및 변경 파일
+- `aleph.config.json` 설정
+- `src/decider.mjs`의 `RULE_IDS`
+- `src/attack-check.mjs`의 실제 점검 결과
+
+`src/attack-check.mjs`는 학생이 작성한 자기 점검 코드입니다. 현재 구현은 배포 앱과 원본 API에 GET 요청을 보낼 수 있습니다. 실행 전에 요청 대상과 내용을 확인해야 합니다.
+
+이 결과는 학생이 실행한 자기 점검 결과이며 심판의 판정 결과가 아닙니다.
+
+`artifacts/submission.json`은 로컬 생성 결과이며 Git에 커밋하지 않습니다. `bundle-notes.json`도 새로 만들거나 Git에 추가하지 않습니다.
+
 ## 저장소 설정
 
 `aleph.config.json`의 현재 주요 설정:
@@ -261,6 +327,7 @@ npm run build -- --local
 - `judgeIssuer`: 기존 심판 주소
 - `identityProvider`: Supabase 인증 정보
 - `allowedRoutes`: 허용된 메모 API 경로
+- `originalApiUrl`: 원본 메모 API 주소
 - `restoreRoute`: `/api/notes/restore`
 
 `judgeIssuer`는 임의로 변경하지 않습니다.
@@ -269,7 +336,7 @@ npm run build -- --local
 
 - Vercel 배포 환경변수는 배포 환경에서 확인해야 합니다.
 - 로컬 빌드와 실제 배포는 별개의 작업입니다.
-- `npm run bundle`은 외부 서비스에 실제 요청을 보낼 수 있으므로 실행 전에 요청 내용을 확인합니다.
+- `npm run bundle`은 외부 서비스에 실제 요청을 보낼 수 있습니다.
 - 실행하지 않은 검사는 통과로 기록하지 않습니다.
 - `bundle-notes.json`과 `artifacts/submission.json`은 Git에 포함하지 않습니다.
 - 심판 응답과 요청 ID는 실제로 확인한 값만 기록합니다.
