@@ -1,3 +1,4 @@
+
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -8,9 +9,15 @@ import { runAttackChecks } from '../src/attack-check.mjs';
 const currentFile = fileURLToPath(import.meta.url);
 const root = dirname(dirname(currentFile));
 
-const gitStatus = () => execFileSync(
+const gitTrackedChanges = () => execFileSync(
   'git',
-  ['-C', root, 'status', '--porcelain', '--untracked-files=all'],
+  ['-C', root, 'diff', '--no-ext-diff', '--no-textconv', '--name-only', 'HEAD', '--'],
+  { encoding: 'utf8' }
+).trim();
+
+const gitUntrackedFiles = () => execFileSync(
+  'git',
+  ['-C', root, 'ls-files', '--others', '--exclude-standard'],
   { encoding: 'utf8' }
 ).trim();
 
@@ -88,7 +95,11 @@ const normalizedRepo = (value) => {
 };
 
 try {
-  const dirty = gitStatus();
+  const trackedChanges = gitTrackedChanges();
+  const untrackedFiles = gitUntrackedFiles();
+  const dirty = [trackedChanges, untrackedFiles]
+    .filter(Boolean)
+    .join('\n');
 
   if (dirty) {
     fail(`커밋되지 않은 파일이 있습니다. 먼저 확인해 주세요:\n${dirty}`);
@@ -100,7 +111,6 @@ try {
 
   try {
     const raw = gitOriginConfig();
-
     repoUrl = normalizedRepo(raw);
   } catch (error) {
     if (error.message?.startsWith('GitHub HTTPS')) {
