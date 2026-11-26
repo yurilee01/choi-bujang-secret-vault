@@ -1,6 +1,6 @@
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { RULE_IDS } from '../src/decider.mjs';
@@ -48,16 +48,9 @@ const gitChangedFiles = (commit) => execFileSync(
   { encoding: 'utf8' }
 ).trim();
 
-const gitConfigFile = () => execFileSync(
-  'git',
-  ['-C', root, 'show', 'HEAD:aleph.config.json'],
-  { encoding: 'utf8' }
-).trim();
-
-const gitCommitSubject = (commit) => execFileSync(
-  'git',
-  ['-C', root, 'log', '-1', '--format=%s', commit],
-  { encoding: 'utf8' }
+const gitConfigFile = () => readFileSync(
+  join(root, 'aleph.config.json'),
+  'utf8'
 ).trim();
 
 const fail = (message) => {
@@ -193,9 +186,8 @@ try {
     fail('src/decider.mjs의 RULE_IDS 이름과 중복을 확인해 주세요.');
   }
 
-  const commitSubject = gitCommitSubject(commit);
   const explanation =
-    `커밋 "${commitSubject}"에서 변경한 파일 ${changedFiles.length}개를 제출합니다.`;
+    `마지막 커밋 ${commit.slice(0, 12)}에서 변경한 파일 ${changedFiles.length}개를 제출합니다.`;
 
   if (typeof runAttackChecks !== 'function') {
     fail('src/attack-check.mjs가 runAttackChecks를 내보내야 합니다.');
