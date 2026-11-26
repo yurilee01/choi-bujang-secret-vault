@@ -15,15 +15,11 @@ const git = (...args) => execFileSync(
     timeout: 5000,
     maxBuffer: 512 * 1024,
     windowsHide: true,
-    env: {
-      ...process.env,
-      GIT_TERMINAL_PROMPT: '0',
-      GIT_OPTIONAL_LOCKS: '0',
-    },
   }
 ).trim();
 
 const fromCommit = (path) => JSON.parse(git('show', `HEAD:${path}`));
+
 const fail = (message) => {
   throw new Error(message);
 };
@@ -261,15 +257,12 @@ try {
     }
   );
 
-  process.stdout.write(
+  console.log(
     `제출 묶음 JSON 생성: ${output}\n` +
     `단계 ${bundle.step} · 커밋 ${commit.slice(0, 12)} · ` +
     `바뀐 파일 ${changedFiles.length}개 · 규칙 ${policyRules.length}개 · ` +
-    `직접 점검 ${attackAttempts.length}개\n`
+    `직접 점검 ${attackAttempts.length}개`
   );
 } catch (error) {
-  process.stderr.write(
-    `제출 묶음 생성 중 첫 오류: ${error.message}\n`
-  );
-  process.exitCode = 1;
+  throw new Error(`제출 묶음 생성 중 첫 오류: ${error.message}`);
 }
