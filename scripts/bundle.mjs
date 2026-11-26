@@ -2,7 +2,9 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { RULE_IDS } from '../src/decider.mjs';
+import { runAttackChecks } from '../src/attack-check.mjs';
 
 const currentFile = fileURLToPath(import.meta.url);
 const root = dirname(dirname(currentFile));
@@ -155,9 +157,6 @@ try {
     fail('3단계부터 aleph.config.json의 allowedRoutes에 자료 API 경로가 필요합니다. 3단계 제작 3을 다시 확인해 주세요.');
   }
 
-  const deciderUrl = pathToFileURL(join(root, 'src', 'decider.mjs'));
-  const { RULE_IDS } = await import(deciderUrl.href);
-
   if (!Array.isArray(RULE_IDS)) {
     fail('src/decider.mjs의 RULE_IDS는 규칙 이름 배열이어야 합니다.');
   }
@@ -179,9 +178,6 @@ try {
   const commitSubject = git('log', '-1', '--format=%s', commit);
   const explanation =
     `커밋 "${commitSubject}"에서 변경한 파일 ${changedFiles.length}개를 제출합니다.`;
-
-  const checkerUrl = pathToFileURL(join(root, 'src', 'attack-check.mjs'));
-  const { runAttackChecks } = await import(checkerUrl.href);
 
   if (typeof runAttackChecks !== 'function') {
     fail('src/attack-check.mjs가 runAttackChecks를 내보내야 합니다.');
@@ -261,7 +257,7 @@ try {
     `제출 묶음 JSON 생성: ${output}\n` +
     `단계 ${bundle.step} · 커밋 ${commit.slice(0, 12)} · ` +
     `바뀐 파일 ${changedFiles.length}개 · 규칙 ${policyRules.length}개 · ` +
-    `직접 점검 ${attackAttempts.length}개`
+    `직접 점검 ${attackAttempts.length}개\n`
   );
 } catch (error) {
   throw new Error(`제출 묶음 생성 중 첫 오류: ${error.message}`);
