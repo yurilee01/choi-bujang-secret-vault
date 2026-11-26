@@ -32,7 +32,6 @@ export async function runAttackChecks(config) {
 
     const response = await fetch(new URL('/data.json', app), {
       redirect: 'error',
-      signal: AbortSignal.timeout(10000),
     });
 
     let visible = false;
